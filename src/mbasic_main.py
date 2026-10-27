@@ -521,10 +521,21 @@ def build_with_uc80(c_file, com_file, runtime_dir, runtime_c, string_count, debu
                   c_file, debug)
         link_inputs.append(shim_rel)
 
+    sym_file = os.path.splitext(com_file)[0] + '.sym'
     _run_tool(['ul80'] + link_inputs +
               [os.path.join(lib, 'libc.lib'), os.path.join(lib, 'runtime.lib'),
-               '-o', com_file],
+               '-o', com_file, '-S', sym_file],
               'ul80 link', c_file, debug, 'Install it with: pip install um80')
+    # The end of the static storage, which the .com does not hold
+    try:
+        with open(sym_file) as f:
+            for line in f:
+                parts = line.split()
+                if len(parts) == 2 and parts[1] == '__BSS_END':
+                    return int(parts[0], 16)
+    except OSError:
+        pass
+    return None
 
 
 def build_with_z88dk(c_file, com_file, runtime_dir, runtime_c, cpu, debug):
@@ -684,11 +695,27 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
         runtime_dir = str(runtime_path)
         runtime_c = os.path.join(runtime_dir, 'mb25_string.c')
 
+        bss_end = None
         if toolchain == 'uc80':
-            build_with_uc80(c_file, com_file, runtime_dir, runtime_c,
-                            backend.string_count, debug)
+            bss_end = build_with_uc80(c_file, com_file, runtime_dir, runtime_c,
+                                      backend.string_count, debug)
         else:
             build_with_z88dk(c_file, com_file, runtime_dir, runtime_c, cpu, debug)
+
+        # The program loads at 0100h, its static storage follows it, and the
+        # stack reserve must fit below the BDOS (FD00h under cpmemu, lower on
+        # most CP/M systems). A program that does not fit overwrites the system
+        # when it starts, and prints garbage.
+        if os.path.exists(com_file):
+            end = bss_end or (0x100 + os.path.getsize(com_file))
+            need = end + backend.stack_reserve
+            if need > 0xFD00:
+                print(f"Error: the program needs memory up to {need:04X}h (code and data to "
+                      f"{end:04X}h, then {backend.stack_reserve} bytes of stack), above the "
+                      "BDOS at FD00h: it does not fit in CP/M. ON ERROR GOTO with RESUME "
+                      "adds code to each statement that can fail.", file=sys.stderr)
+                os.remove(com_file)
+                sys.exit(1)
 
         # Flush for the same reason as "Generated C" above: the emulator started
         # below writes straight to fd 1, so an unflushed buffer prints this line

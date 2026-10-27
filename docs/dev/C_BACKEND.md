@@ -27,10 +27,10 @@ run time (`docs/dev/JS_TYPE_MISMATCH.md`).
 Before this change the backend filled `self.warnings` and nobody showed it. It wrote
 an unsupported construct to the C file as a comment.
 
-Examples of errors: `PRINT USING`, `INKEY$`, `INPUT$`, `TRON`, `RUN`, `FILES`,
+Examples of errors: `INKEY$`, `INPUT$`, `TRON`, `RUN`, `FILES`,
 `NAME`, `CHAIN` options, string-valued `DEF FN`, and a FOR loop without a NEXT below
-it. The code for `PRINT USING` printed the text `%.*f` for most formats, because the
-uc80 `printf` has no `*` width.
+it. `PRINT USING` was an error too until 2026-10-27 (the code for it printed the text
+`%.*f`, because the uc80 `printf` has no `*` width); see [PRINT USING](#print-using).
 
 ## Numbers
 
@@ -149,12 +149,10 @@ These differences are known. They are not fixed.
   because the formatter rounds to 7 digits, but a test for equality on a computed
   float can go wrong. Compare with a small tolerance in a program that is to be
   compiled. See `UC80_BUGS_TODO.md`.
-- **Error handling is not supported.** `ON ERROR GOTO line`, `RESUME`, `ERROR`, `ERR`
-  and `ERL` are compile errors, because the compiled program has no error handler.
-  `ON ERROR GOTO 0` is accepted. A run-time error ends the program.
+- **Error handling** works as in MBASIC 5.21: see [ON ERROR GOTO](#on-error-goto).
 - **Run-time errors** (`Subscript out of range`, `Illegal function call`,
   `String too long`, `Out of DATA`, `RETURN without GOSUB`, `File not found`,
-  `File not open`) print a new line when the cursor is not in column 1, then
+  `Bad file number`) print a new line when the cursor is not in column 1, then
   `message in LINE`, as MBASIC 5.21 does (no `?` in front). The C program keeps the line number in
   `mb25_line` (one store at the start of each line). `SQR` of a negative number, `LOG` of
   zero or less, a negative base with a fraction as exponent, `ASC("")`, a count or code outside
@@ -171,11 +169,11 @@ These differences are known. They are not fixed.
   `Overflow` on a line of their own and go on with the largest float (`1.70141E+38`),
   as MBASIC does. (A constant above the range gives no message, as in MBASIC.)
   `EXP` of a number below -88.72 is 0, and `A^B` gives `Overflow` from `2^126`.
-  `ON ERROR` does not see these errors. The operators `\`, `MOD`, `AND`, `OR`, `XOR`,
-  `EQV`, `IMP` and `NOT` stop with `Overflow` or `Division by zero` (the program ends,
-  as for any run-time error).
-- **Not done: `PRINT USING`, and `DIM` with a negative size or a second `DIM`.**
-  The compiler refuses `PRINT USING`. It also refuses a `DIM` with a constant negative
+  With `ON ERROR GOTO` set, these errors go to the handler, as in MBASIC. The
+  operators `\`, `MOD`, `AND`, `OR`, `XOR`, `EQV`, `IMP` and `NOT` give `Overflow` or
+  `Division by zero` as a run-time error (the handler, or the end of the program).
+- **Not done: `DIM` with a negative size or a second `DIM`.**
+  The compiler refuses a `DIM` with a constant negative
   size or a second `DIM` of the same array, with a message at compile time (MBASIC
   gives `Illegal function call` or `Duplicate Definition` at run time).
 - **Not done: `A^127`.** MBASIC prints only `Overflow`. The C backend prints the
@@ -192,10 +190,70 @@ These differences are known. They are not fixed.
 - **INPUT** reads a whole line. It does not give `?Redo from start`, and with several
   variables it does not ask again for missing values. At the end of the input the
   program ends.
-- **Bad data** in `READ` and `VAL` gives 0 and not an error.
+- **Bad data** in `READ` is an error, as in MBASIC. Some items are bad for a
+  numeric variable: a quoted item, and text that is not a number. `READ` stores the
+  number that the text starts with. Then it gives `Syntax error` in the line of the
+  `DATA`. `&O8` is a `Syntax error` in the
+  line of the `READ`. A number too large is `Overflow`. A quoted item with text after
+  it (`"a"b`) is a `Syntax error` for a string too. The next `READ` starts again at
+  the first item of the statement that failed. The compiler finds these items when it
+  compiles (`_data_item_flag`). `VAL` of bad text gives 0, as in MBASIC.
+- **The program must fit in memory.** The build stops with an error when the code,
+  the data and the stack reserve go above FD00h. A larger program overwrites CP/M
+  when it starts.
 - **A tab character** in the output is not expanded by the CP/M console.
 - **Random-access files** (`FIELD`, `GET`, `PUT`) do not build with uc80.
 - `STOP` prints `Break in <line>` and ends the program. There is no `CONT`.
+
+## ON ERROR GOTO
+
+Every run-time error goes through `mb25_fail(code)` in the runtime, with the
+error code of MBASIC (`src/error_codes.py`). The runtime has one table of the
+messages. A code without a message prints `Unprintable error`. `Division by zero`
+and `Overflow` in a float expression go through `mb25_warn(code)`, which prints the
+message and goes on, or calls `mb25_fail` when `ON ERROR GOTO` is set.
+
+When `ON ERROR GOTO n` is set and the handler is not running, `mb25_fail` sets `ERR`,
+`ERL` and the number of the statement, and calls `longjmp`. `main()` calls `setjmp`
+once, before the first line, and goes to the line of the handler. Because of the
+`longjmp`, the variables, arrays, GOSUB stack and file tables of `main()` are
+`static` in a program with `ON ERROR GOTO n`.
+
+`RESUME` and `RESUME NEXT` must go back to a statement. When a program has one of
+them, each statement gets a label `p_N` before it and stores `N` in `mb25_stmt`.
+`RESUME` goes to `p_N` of the statement with the error, and `RESUME NEXT` goes to
+`p_(N+1)`, the label after it. The cost is one store and one `switch` case for each
+statement. A program with only `RESUME n` has no labels.
+
+The rules are those of MBASIC 5.21 (measured, see
+`tests/regression/integration/test_c_backend_on_error_using.py`):
+
+- `RESUME`, `RESUME NEXT` and `RESUME n` set `ERR` to 0 and keep `ERL`. Until the next
+  line starts, an error is reported in `ERL`.
+- After an error in the condition of an `IF`, `RESUME NEXT` goes on at the second
+  statement of the THEN part. MBASIC looks for the next `:`.
+- An error in the handler stops the program, in the line of the handler.
+  `ON ERROR GOTO 0` in the handler stops it with the error of the handler, in
+  `ERL`. A handler that goes past the last line is `No RESUME`.
+- `RESUME` with no error is `RESUME without error`, and a handler can trap it.
+  `ON ERROR GOTO` to a line that is not in the program is `Undefined line number`
+  when the statement runs.
+- `ERROR 0` and `ERROR 256` are `Illegal function call`.
+- A `FOR` that fails (`FOR I%=1E10`) starts no loop, so after `RESUME NEXT` its
+  `NEXT` is `NEXT without FOR`. With `ON ERROR GOTO`, each loop has a flag that the
+  `FOR` sets and the end of the loop clears. A `FOR` with a double variable is
+  `Type mismatch` in every program, as in MBASIC.
+
+## PRINT USING
+
+The runtime formats each value when the program has calculated it.
+`mb25_using_begin` takes the format. `mb25_using_num` and `mb25_using_str` take one
+value each. `mb25_using_end` prints the rest of the format up to the next field,
+and the new line. The code is a port of the `_using_*` functions of the
+JavaScript runtime (`src/codegen_js_backend.py`), which are a port of
+`UsingFormatter` in `src/basic_builtins.py`. A value of the wrong type for its field
+is `Type mismatch`, after the text that came before it. A double has 7 digits
+under uc80 (its doubles are 32 bits), so a field for more digits shows zeros.
 
 ## Tests
 

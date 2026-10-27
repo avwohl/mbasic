@@ -297,7 +297,7 @@ mb25_error_t mb25_string_concat(uint16_t dest_id, uint16_t str1_id, uint16_t str
 
     uint16_t total_len = str1->len + str2->len;
     if (total_len > MB25_MAX_STRING_LEN) {
-        mb25_fail("String too long");
+        mb25_fail(MB25_E_STRING_LONG);
     }
 
     /* Build the result in a local buffer first: dest may be str1 or str2,
@@ -873,7 +873,7 @@ uint16_t mb25_radix(uint16_t id, int v, int base) {
 int mb25_asc(uint16_t id) {
     uint8_t *d = mb25_get_data(id);
     if (!d || mb25_get_length(id) == 0) {
-        mb25_fail("Illegal function call");
+        mb25_fail(MB25_E_ILLEGAL_FUNC);
     }
     return d[0];
 }
@@ -982,7 +982,7 @@ double mb25_val_cstr(const char *s) {
         }
         v = v * base + digit;
         if (v > 65535.0) {
-            mb25_fail("Overflow");
+            mb25_fail(MB25_E_OVERFLOW);
         }
     }
     return v > 32767.0 ? (v - 65536.0) : v;
@@ -1035,7 +1035,7 @@ double mb25_sqr(double v) {
     double r;
     int n;
     if (v < 0) {
-        mb25_fail("Illegal function call");
+        mb25_fail(MB25_E_ILLEGAL_FUNC);
     }
     if (v == 0) {
         return 0;
@@ -1084,17 +1084,17 @@ static double mb25_pow_raw(double x, double y) {
  * up (87.3365 = log of 2^126), earlier than the largest float. */
 double mb25_pow(double x, double y) {
     if (x == 0 && y < 0) {
-        mb25_warn("Division by zero");
+        mb25_warn(MB25_E_DIV_ZERO);
         return mb25_big(0);
     }
     if (x == 0) {
         return y == 0 ? 1 : 0;   /* 0^.5 is 0; the uc80 pow() goes through log(0) */
     }
     if (x < 0 && floor(y) != y) {
-        mb25_fail("Illegal function call");
+        mb25_fail(MB25_E_ILLEGAL_FUNC);
     }
     if (x != 0 && y > 0 && y * log(x < 0 ? -x : x) >= 87.3365) {
-        mb25_warn("Overflow");
+        mb25_warn(MB25_E_OVERFLOW);
         return mb25_big(x < 0 && ((int)y & 1));
     }
     return mb25_checked(mb25_pow_raw(x, y));
@@ -1110,7 +1110,7 @@ int mb25_int16(double v) {
     int negative = v < 0;
     double size = floor((negative ? -v : v) + 0.5);
     if (size > (negative ? 32768.0 : 32767.0)) {
-        mb25_fail("Overflow");
+        mb25_fail(MB25_E_OVERFLOW);
     }
     return negative ? -(int)size : (int)size;
 }
@@ -1119,7 +1119,7 @@ int mb25_int16(double v) {
  * -32768..32767 is Overflow. */
 int mb25_chk32(long v) {
     if (v < -32768L || v > 32767L) {
-        mb25_fail("Overflow");
+        mb25_fail(MB25_E_OVERFLOW);
     }
     return (int)v;
 }
@@ -1132,8 +1132,11 @@ int mb25_cint(double v) {
  * Overflow in a floating-point expression.  The value that goes on is the
  * largest float, with the sign of the true result.  MBASIC prints no new line
  * before the message, whatever the column. */
-void mb25_warn(const char *msg) {
-    fputs(msg, stdout);
+void mb25_warn(int code) {
+    if (mb25_on_error) {
+        mb25_fail(code);           /* with ON ERROR GOTO armed it is an error */
+    }
+    fputs(mb25_message(code), stdout);
     putchar('\n');
     mb25_set_col(0);
 }
@@ -1147,7 +1150,7 @@ static double mb25_big(int negative) {
 static double mb25_checked(double r) {
     double size = r < 0 ? -r : r;
     if (size >= 1.70141E+38) {
-        mb25_warn("Overflow");
+        mb25_warn(MB25_E_OVERFLOW);
         return mb25_big(r < 0);
     }
     return r;
@@ -1155,7 +1158,7 @@ static double mb25_checked(double r) {
 
 double mb25_fdiv(double a, double b) {
     if (b == 0) {
-        mb25_warn("Division by zero");
+        mb25_warn(MB25_E_DIV_ZERO);
         return mb25_big(a < 0);
     }
     return a / b;
@@ -1166,7 +1169,7 @@ double mb25_fdiv(double a, double b) {
 double mb25_fmul(double a, double b) {
     double sa = a < 0 ? -a : a, sb = b < 0 ? -b : b;
     if (sa != 0 && sb != 0 && sb > mb25_big(0) / sa) {
-        mb25_warn("Overflow");
+        mb25_warn(MB25_E_OVERFLOW);
         return mb25_big((a < 0) != (b < 0));
     }
     return a * b;
@@ -1176,7 +1179,7 @@ double mb25_fmul(double a, double b) {
  * -88.7228 (log of 2^-128). */
 double mb25_exp(double v) {
     if (v >= 87.3365) {
-        mb25_warn("Overflow");
+        mb25_warn(MB25_E_OVERFLOW);
         return mb25_big(0);
     }
     /* The size is compared, not v: uc80 gets two negative floats wrong. */
@@ -1191,7 +1194,7 @@ double mb25_exp(double v) {
 double mb25_fadd(double a, double b) {
     double sa = a < 0 ? -a : a, sb = b < 0 ? -b : b;
     if (((a < 0) == (b < 0)) && sa > mb25_big(0) - sb) {
-        mb25_warn("Overflow");
+        mb25_warn(MB25_E_OVERFLOW);
         return mb25_big(a < 0);
     }
     return a + b;
@@ -1206,7 +1209,7 @@ double mb25_fsub(double a, double b) {
 int mb25_iadd(int a, int b) {
     int r = a + b;
     if (((a ^ r) & (b ^ r)) < 0) {
-        mb25_fail("Overflow");
+        mb25_fail(MB25_E_OVERFLOW);
     }
     return r;
 }
@@ -1214,14 +1217,14 @@ int mb25_iadd(int a, int b) {
 int mb25_isub(int a, int b) {
     int r = a - b;
     if (((a ^ b) & (a ^ r)) < 0) {
-        mb25_fail("Overflow");
+        mb25_fail(MB25_E_OVERFLOW);
     }
     return r;
 }
 
 double mb25_log(double v) {
     if (v <= 0) {
-        mb25_fail("Illegal function call");
+        mb25_fail(MB25_E_ILLEGAL_FUNC);
     }
     return log(v);
 }
@@ -1230,7 +1233,7 @@ double mb25_log(double v) {
  * Illegal function call. */
 int mb25_byte(int v) {
     if (v < 0 || v > 255) {
-        mb25_fail("Illegal function call");
+        mb25_fail(MB25_E_ILLEGAL_FUNC);
     }
     return v;
 }
@@ -1238,7 +1241,7 @@ int mb25_byte(int v) {
 /* The start of MID$ or INSTR: 1..255. */
 int mb25_start(int v) {
     if (v < 1 || v > 255) {
-        mb25_fail("Illegal function call");
+        mb25_fail(MB25_E_ILLEGAL_FUNC);
     }
     return v;
 }
@@ -1249,7 +1252,7 @@ int mb25_word(double v) {
     int negative = v < 0;
     double size = floor((negative ? -v : v) + 0.5);
     if (size > (negative ? 32768.0 : 65535.0)) {
-        mb25_fail("Overflow");
+        mb25_fail(MB25_E_OVERFLOW);
     }
     if (negative) {
         return -(int)size;
@@ -1261,7 +1264,7 @@ int mb25_word(double v) {
  * tested, as MBASIC does. */
 int mb25_idiv(int a, int b) {
     if (b == 0) {
-        mb25_fail("Division by zero");
+        mb25_fail(MB25_E_DIV_ZERO);
     }
     return a / b;
 }
@@ -1269,7 +1272,7 @@ int mb25_idiv(int a, int b) {
 /* \ where the quotient may not fit an integer: -32768 \ -1 is 32768. */
 double mb25_idivd(int a, int b) {
     if (b == 0) {
-        mb25_fail("Division by zero");
+        mb25_fail(MB25_E_DIV_ZERO);
     }
     if (b == -1) {
         return -(double)a;
@@ -1279,7 +1282,7 @@ double mb25_idivd(int a, int b) {
 
 int mb25_imod(int a, int b) {
     if (b == 0) {
-        mb25_fail("Division by zero");
+        mb25_fail(MB25_E_DIV_ZERO);
     }
     return a % b;
 }
@@ -1307,7 +1310,7 @@ double mb25_fix(double v) {
  * is "Subscript out of range". */
 int mb25_subscript(int i, int n, int base) {
     if (i < 0 || i >= n) {
-        mb25_fail(i + base < 0 ? "Illegal function call" : "Subscript out of range");
+        mb25_fail(i + base < 0 ? MB25_E_ILLEGAL_FUNC : MB25_E_SUBSCRIPT);
     }
     return i;
 }
@@ -1330,7 +1333,7 @@ int mb25_ea_first(char *st, int *rk, int *n, int k, int dflt, int i, int base) {
         }
     }
     if (*rk != k) {
-        mb25_fail("Subscript out of range");
+        mb25_fail(MB25_E_SUBSCRIPT);
     }
     return mb25_subscript(i, n[0], base);
 }
@@ -1343,7 +1346,7 @@ int mb25_ea_next(int acc, int *n, int j, int i, int base) {
 /* DIM of an array with k subscripts: the caller then fills in n[]. */
 void mb25_ea_dim(char *st, int *rk, int k) {
     if (*st) {
-        mb25_fail("Duplicate Definition");
+        mb25_fail(MB25_E_DUPLICATE);
     }
     *st = 1;
     *rk = k;
@@ -1355,7 +1358,7 @@ int mb25_ea_erase(char *st, int *rk, int *n) {
     int j;
     int total = 1;
     if (!*st) {
-        mb25_fail("Illegal function call");
+        mb25_fail(MB25_E_ILLEGAL_FUNC);
     }
     for (j = 0; j < *rk; j++) {
         total *= n[j];
@@ -1610,17 +1613,38 @@ static int mb25_round_digits(char *d, int n, int keep, int *e10) {
     return n;
 }
 
-/* Round a positive double to a single as MBASIC does: to the nearest, and a
- * tie to the larger magnitude (number_format._single_ties_up). */
-static double mb25_single_up(double v) {
-    double g = (float)v, ulp;
-    int e;
-    if (g == v || g >= v) {
-        return g;
+/* A positive single as m * 2^e, m in [2^23, 2^24).  The steps of FOUT
+ * below work on m with integer arithmetic: uc80's float operations do not
+ * round the way MBASIC's do (1E20 printed 9.99999E+19), and these are exact
+ * on any compiler. */
+static void mb25_sng_split(double v, unsigned long *m, int *e) {
+    int k;
+    double f = frexp(v, &k);       /* v = f * 2^k, f in [0.5, 1) */
+    *m = (unsigned long)ldexp(f, 24);
+    *e = k - 24;
+}
+
+/* p * 2^e rounded to 24 bits, a tie up, as MBASIC rounds; p < 2^31 */
+static void mb25_sng_norm(unsigned long p, int *e, unsigned long *m) {
+    int s = 0;
+    unsigned long low = 0, half;
+    while ((p >> s) >= 0x1000000UL) {
+        s++;
     }
-    frexp(g, &e);
-    ulp = ldexp(1.0, e - 24);
-    return (v - g == g + ulp - v) ? g + ulp : g;
+    if (s > 0) {
+        half = 1UL << (s - 1);
+        low = p & ((1UL << s) - 1);
+        p >>= s;
+        if (low >= half) {
+            p++;
+            if (p == 0x1000000UL) {
+                p >>= 1;
+                s++;
+            }
+        }
+    }
+    *m = p;
+    *e += s;
 }
 
 /* The six digits MBASIC's FOUT prints for a positive single (foutnv in
@@ -1629,55 +1653,44 @@ static double mb25_single_up(double v) {
  * fraction (number_format._single_fout_digits).  Puts the digits in d, the
  * power of ten of the leading one in *e10, and returns the count. */
 static int mb25_fout_single(char *d, double v, int *e10) {
-    double x = mb25_single_up(v);
-    long k;
-    int i, e = 0;
-    if (x >= 999999.5) {
-        while (x >= 999999.5) {
-            x = mb25_single_up(x / 10);
-            e++;
+    unsigned long m, k;
+    int e, i, x = 0;
+    mb25_sng_split(v, &m, &e);
+    if (ldexp((double)m, e) >= 999999.5) {
+        while (ldexp((double)m, e) >= 999999.5) {
+            /* m / 10 with 7 more bits, then back to 24 bits */
+            unsigned long q = (m << 7) / 10;
+            e -= 7;
+            mb25_sng_norm(q, &e, &m);
+            x++;
         }
     } else {
-        while (x < 99999.953125) {
-            x = mb25_single_up(x * 10);
-            e--;
+        while (ldexp((double)m, e) < 99999.953125) {
+            mb25_sng_norm(m * 10, &e, &m);
+            x--;
         }
     }
-    k = (long)mb25_single_up(x + 0.5);
+    /* + .5 in single precision, then the integer part; here e is -4 to -7 */
+    k = m + (1UL << (-e - 1));
+    mb25_sng_norm(k, &e, &k);
+    k >>= -e;
     for (i = 5; i >= 0; i--) {
         d[i] = (char)('0' + k % 10);
         k /= 10;
     }
-    *e10 = e + 5;
+    *e10 = x + 5;
     return 6;
 }
 
-/* The characters MBASIC prints for a number, without the padding spaces
- * (number_format.format_number).  kind 0 is single, 1 is double.  buf needs
- * 40 bytes.  Returns the length. */
-int mb25_fmt_num(char *buf, double v, int kind) {
-    char d[MB25_FMT_MAX + 2];
+/* The significant digits PRINT shows for a number v > 0, most significant
+ * first and without trailing zeros, in d; *e10 is the power of ten of the
+ * first.  kind 0 is single (FOUT's six digits), 1 is double.  Returns the
+ * count. */
+static int mb25_num_digits(char *d, double v, int kind, int *e10) {
     int digits = kind ? (int)MB25_DOUBLE_DIGITS : MB25_SINGLE_DIGITS;
-    int n, i, e, p, x, s, neg = 0, len = 0, scaled;
+    int n, i, e, p, x;
     double m;
     unsigned int b;
-
-    if (v != v) {
-        v = 0;
-    }
-    if (v < 0) {
-        neg = 1;
-        v = -v;
-    }
-    if (v == 0) {
-        buf[0] = '0';
-        buf[1] = 0;
-        return 1;
-    }
-    if (v > 3.4e38) {              /* MBASIC's machine infinity */
-        strcpy(buf, neg ? "-1.70141E+38" : "1.70141E+38");
-        return neg ? 12 : 11;
-    }
 
     if (kind == 0) {
         n = mb25_fout_single(d, v, &x);
@@ -1716,7 +1729,36 @@ int mb25_fmt_num(char *buf, double v, int kind) {
     while (n > 1 && d[n - 1] == '0') {
         n--;
     }
-    s = n;
+    *e10 = x;
+    return n;
+}
+
+/* The characters MBASIC prints for a number, without the padding spaces
+ * (number_format.format_number).  kind 0 is single, 1 is double.  buf needs
+ * 40 bytes.  Returns the length. */
+int mb25_fmt_num(char *buf, double v, int kind) {
+    char d[MB25_FMT_MAX + 2];
+    int digits = kind ? (int)MB25_DOUBLE_DIGITS : MB25_SINGLE_DIGITS;
+    int i, x, s, neg = 0, len = 0, scaled;
+
+    if (v != v) {
+        v = 0;
+    }
+    if (v < 0) {
+        neg = 1;
+        v = -v;
+    }
+    if (v == 0) {
+        buf[0] = '0';
+        buf[1] = 0;
+        return 1;
+    }
+    if (v > 3.4e38) {              /* MBASIC's machine infinity */
+        strcpy(buf, neg ? "-1.70141E+38" : "1.70141E+38");
+        return neg ? 12 : 11;
+    }
+
+    s = mb25_num_digits(d, v, kind, &x);
 
     if (x >= 0) {
         scaled = (x + 1) > digits;
@@ -1980,21 +2022,108 @@ void mb25_get_stats(uint32_t *total_allocs, uint32_t *total_gcs, uint16_t *max_u
  * goes up to 65529, so it is unsigned. */
 unsigned int mb25_line;
 
-/* Stop the program with a run-time error.  MBASIC starts a new line when the
- * cursor is not in column 1, then prints the message in LINE. */
-void mb25_fail(const char *msg) {
+/* ON ERROR GOTO state (see mb25_string.h).  ERL is the line that was
+ * running; RESUME goes back to statement mb25_err_stmt. */
+jmp_buf mb25_jmp;
+unsigned int mb25_on_error;
+char mb25_in_trap;
+int mb25_err;
+unsigned int mb25_erl;
+unsigned int mb25_stmt;
+unsigned int mb25_err_stmt;
+
+/* MBASIC 5.21's messages by error code (src/error_codes.py); 0 for a code
+ * that has none, which prints as Unprintable error. */
+static const char *const mb25_messages[] = {
+    "NEXT without FOR",
+    "Syntax error",
+    "RETURN without GOSUB",
+    "Out of DATA",
+    "Illegal function call",
+    "Overflow",
+    "Out of memory",
+    "Undefined line number",
+    "Subscript out of range",
+    "Duplicate Definition",
+    "Division by zero",
+    "Illegal direct",
+    "Type mismatch",
+    "Out of string space",
+    "String too long",
+    "String formula too complex",
+    "Can't continue",
+    "Undefined user function",
+    "No RESUME",
+    "RESUME without error",
+    "Unprintable error",
+    "Missing operand",
+    "Line buffer overflow",
+    0,
+    0,
+    "FOR Without NEXT",
+    0,
+    0,
+    "WHILE without WEND",
+    "WEND without WHILE",
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    "FIELD overflow",
+    "Internal error",
+    "Bad file number",
+    "File not found",
+    "Bad file mode",
+    "File already open",
+    0,
+    "Disk I/O error",
+    "File already exists",
+    0,
+    0,
+    "Disk full",
+    "Input past end",
+    "Bad record number",
+    "Bad file name",
+    0,
+    "Direct statement in file",
+    "Too many files",
+};
+
+const char *mb25_message(int code) {
+    const char *m = (code >= 1 && code <= 67) ? mb25_messages[code - 1] : 0;
+    return m ? m : "Unprintable error";
+}
+
+/* Print an error message "in" a line and stop.  MBASIC starts a new line
+ * when the cursor is not in column 1. */
+static void mb25_stop(int code, unsigned int line) {
     char t[6];
     int n = 0;
-    unsigned int u = mb25_line;
+    mb25_set_out(NULL);
     if (mb25_con_col != 0) {
         putchar('\n');
     }
-    fputs(msg, stdout);
-    if (u > 0) {
+    fputs(mb25_message(code), stdout);
+    if (line > 0) {
         fputs(" in ", stdout);
-        while (u) {
-            t[n++] = (char)('0' + u % 10);
-            u /= 10;
+        while (line) {
+            t[n++] = (char)('0' + line % 10);
+            line /= 10;
         }
         while (n) {
             putchar(t[--n]);
@@ -2002,4 +2131,436 @@ void mb25_fail(const char *msg) {
     }
     putchar('\n');
     exit(1);
+}
+
+/* A run-time error.  With ON ERROR GOTO armed and no error being handled it
+ * goes to the handler; otherwise the program stops with the message.  An
+ * error inside the handler stops it too, in the handler's line (measured). */
+void mb25_fail(int code) {
+    if (mb25_on_error && !mb25_in_trap) {
+        mb25_err = code;
+        mb25_erl = mb25_line;
+        mb25_err_stmt = mb25_stmt;
+        mb25_in_trap = 1;
+        longjmp(mb25_jmp, 1);
+    }
+    mb25_stop(code, mb25_line);
+}
+
+/* ERROR n: n is a byte and not 0 (ERROR 0 and ERROR 256 are Illegal
+ * function call).  A code with no message is Unprintable error. */
+void mb25_error(double n) {
+    int code = mb25_cint(n);
+    if (code <= 0 || code > 255) {
+        mb25_fail(MB25_E_ILLEGAL_FUNC);
+    }
+    mb25_fail(code);
+}
+
+/* ON ERROR GOTO 0.  Inside the handler it stops the program with the error
+ * being handled, in ERL (measured: "Division by zero in 20"). */
+void mb25_trap_off(void) {
+    if (mb25_in_trap) {
+        mb25_stop(mb25_err, mb25_erl);
+    }
+    mb25_on_error = 0;
+}
+
+/* RESUME, before it jumps: RESUME without error, else the error is done and
+ * ERR is 0 again (ERL stays).  Until the next line starts, the line is ERL
+ * again (an error there is reported in ERL, as on the binary). */
+void mb25_resume(void) {
+    if (!mb25_in_trap) {
+        mb25_fail(MB25_E_NO_ERROR);
+    }
+    mb25_in_trap = 0;
+    mb25_err = 0;
+    mb25_line = mb25_erl;
+}
+
+/* ===== PRINT USING =====
+ *
+ * A port of UsingFormatter (src/basic_builtins.py) by way of the JavaScript
+ * runtime's _using_* functions.  The generated code calls
+ * mb25_using_begin with the format, then mb25_using_num or mb25_using_str
+ * for each value as it is worked out, then mb25_using_end.  Each value
+ * prints the format's text up to the next field (going back to the start of
+ * the format when it runs out) and then itself in that field. */
+static char mb25_u_fmt[MB25_MAX_STRING_LEN + 1];
+static int mb25_u_len, mb25_u_pos;
+
+/* A numeric field.  lead is the room before the decimal point (with a
+ * leading +), trail the room from the point on (0 when there is none). */
+typedef struct {
+    int lead, trail;
+    char leading_sign, trailing_sign, trailing_minus, dollar, star, comma, expo;
+} mb25_u_spec;
+
+enum { MB25_U_END, MB25_U_FIRST, MB25_U_FULL, MB25_U_FIXED, MB25_U_NUM };
+
+static void mb25_u_text(const uint8_t *s, int len) {
+    while (len-- > 0) {
+        mb25_putc(*s++);
+    }
+}
+
+static int mb25_u_at(int i, const char *s) {
+    while (*s) {
+        if (i >= mb25_u_len || mb25_u_fmt[i] != *s) {
+            return 0;
+        }
+        i++;
+        s++;
+    }
+    return 1;
+}
+
+/* Parse a numeric field at mb25_u_fmt[i]; returns its digit count (0: not
+ * a field) and the position after it in *end. */
+static int mb25_u_numeric(int i, mb25_u_spec *f, int *end) {
+    int digits = 0, after = 0, point = 0;
+    memset(f, 0, sizeof(*f));
+    if (mb25_u_at(i, "**$")) {
+        f->star = f->dollar = 1;
+        digits = 3;
+        i += 3;
+    } else if (mb25_u_at(i, "**")) {
+        f->star = 1;
+        digits = 2;
+        i += 2;
+    } else if (mb25_u_at(i, "$$")) {
+        f->dollar = 1;
+        digits = 2;
+        i += 2;
+    } else if (mb25_u_fmt[i] == '+') {
+        f->leading_sign = 1;
+        i++;
+    }
+    while (i < mb25_u_len) {
+        char c = mb25_u_fmt[i];
+        if (c == '#') {
+            digits++;
+            if (point) {
+                after++;
+            }
+        } else if (c == '.' && !point) {
+            point = 1;
+        } else if (c == ',') {
+            f->comma = 1;
+            digits++;
+        } else {
+            break;
+        }
+        i++;
+    }
+    if (mb25_u_at(i, "^^^^")) {
+        f->expo = 1;
+        i += 4;
+    }
+    if (i < mb25_u_len && !f->leading_sign) {
+        if (mb25_u_fmt[i] == '+') {
+            f->trailing_sign = 1;
+            i++;
+        } else if (mb25_u_fmt[i] == '-') {
+            f->trailing_minus = 1;
+            i++;
+        }
+    }
+    *end = i;
+    f->lead = digits - after + f->leading_sign;
+    f->trail = point ? after + 1 : 0;
+    return digits;
+}
+
+/* Print the format's text from mb25_u_pos up to the next field and parse
+ * that field.  At the end of the format: MB25_U_END, or with wrap, go on
+ * from the start (the caller knows that the format has a field). */
+static int mb25_u_next(mb25_u_spec *f, int *width, int wrap) {
+    int i, j, end;
+    for (;;) {
+        if (mb25_u_pos >= mb25_u_len) {
+            if (!wrap) {
+                return MB25_U_END;
+            }
+            mb25_u_pos = 0;
+        }
+        i = mb25_u_pos;
+        switch (mb25_u_fmt[i]) {
+        case '_':
+            if (i + 1 < mb25_u_len) {
+                mb25_putc(mb25_u_fmt[i + 1]);
+                mb25_u_pos = i + 2;
+                continue;
+            }
+            break;
+        case '!':
+            mb25_u_pos = i + 1;
+            return MB25_U_FIRST;
+        case '&':
+            mb25_u_pos = i + 1;
+            return MB25_U_FULL;
+        case '\\':
+            for (j = i + 1; j < mb25_u_len && mb25_u_fmt[j] == ' '; j++) {
+            }
+            if (j < mb25_u_len && mb25_u_fmt[j] == '\\') {
+                *width = j - i + 1;
+                mb25_u_pos = j + 1;
+                return MB25_U_FIXED;
+            }
+            break;
+        case '#': case '.': case '+': case '-': case '*': case '$':
+            if ((mb25_u_fmt[i] != '*' || mb25_u_at(i, "**") || mb25_u_at(i, "*$"))
+                    && (mb25_u_fmt[i] != '$' || mb25_u_at(i, "$$"))
+                    && mb25_u_numeric(i, f, &end)) {
+                mb25_u_pos = end;
+                return MB25_U_NUM;
+            }
+            break;
+        }
+        mb25_putc(mb25_u_fmt[i]);
+        mb25_u_pos = i + 1;
+    }
+}
+
+/* Whether the format has a field at all (a value with none is Illegal
+ * function call, after the text). */
+static int mb25_u_has_field(void) {
+    int save = mb25_u_pos, kind = MB25_U_END;
+    mb25_u_spec f;
+    for (mb25_u_pos = 0; mb25_u_pos < mb25_u_len; ) {
+        int i = mb25_u_pos, end;
+        char c = mb25_u_fmt[i];
+        if (c == '!' || c == '&') {
+            kind = MB25_U_FIRST;
+            break;
+        }
+        if (c == '\\') {
+            int j;
+            for (j = i + 1; j < mb25_u_len && mb25_u_fmt[j] == ' '; j++) {
+            }
+            if (j < mb25_u_len && mb25_u_fmt[j] == '\\') {
+                kind = MB25_U_FIXED;
+                break;
+            }
+        }
+        if (c == '_' && i + 1 < mb25_u_len) {
+            mb25_u_pos = i + 2;
+            continue;
+        }
+        if ((c == '#' || c == '.' || c == '+' || c == '-'
+                || (c == '*' && (mb25_u_at(i, "**") || mb25_u_at(i, "*$")))
+                || (c == '$' && mb25_u_at(i, "$$"))) && mb25_u_numeric(i, &f, &end)) {
+            kind = MB25_U_NUM;
+            break;
+        }
+        mb25_u_pos = i + 1;
+    }
+    mb25_u_pos = save;
+    return kind != MB25_U_END;
+}
+
+void mb25_using_begin(const char *s, int len) {
+    if (len <= 0) {
+        mb25_fail(MB25_E_ILLEGAL_FUNC);
+    }
+    memcpy(mb25_u_fmt, s, (size_t)len);
+    mb25_u_len = len;
+    mb25_u_pos = 0;
+}
+
+void mb25_using_begin_id(uint16_t id) {
+    mb25_using_begin((const char *)mb25_get_data(id), mb25_get_length(id));
+}
+
+/* The field for the next value: Type mismatch when it is not of the kind
+ * the value needs, and Illegal function call when the format has none. */
+static int mb25_u_field(mb25_u_spec *f, int *width, int numeric) {
+    int kind;
+    if (!mb25_u_has_field()) {
+        mb25_u_next(f, width, 0);  /* the text, then the error */
+        mb25_fail(MB25_E_ILLEGAL_FUNC);
+    }
+    kind = mb25_u_next(f, width, 1);
+    if ((kind == MB25_U_NUM) != numeric) {
+        mb25_fail(MB25_E_TYPE);
+    }
+    return kind;
+}
+
+void mb25_using_text(const char *s, int len) {
+    mb25_u_spec f;
+    int width = 0, kind = mb25_u_field(&f, &width, 0);
+    if (kind == MB25_U_FIRST) {
+        mb25_putc(len > 0 ? (uint8_t)s[0] : ' ');
+    } else if (kind == MB25_U_FULL) {
+        mb25_u_text((const uint8_t *)s, len);
+    } else {
+        mb25_u_text((const uint8_t *)s, len < width ? len : width);
+        while (len++ < width) {
+            mb25_putc(' ');
+        }
+    }
+}
+
+void mb25_using_str(uint16_t id) {
+    char copy[MB25_MAX_STRING_LEN + 1];
+    int len = mb25_get_length(id);
+    memcpy(copy, mb25_get_data(id), (size_t)len);
+    mb25_using_text(copy, len);
+}
+
+/* Round the digits d (n of them, the first worth 10^x) to `decimals`
+ * places: the integer digits without leading zeros go to ip, the decimals
+ * to fp. */
+static void mb25_u_fixed(const char *d, int n, int x, int decimals, char *ip, char *fp) {
+    char all[80];
+    int i, k, len = 0, int_len, carry;
+    if (x >= 0) {
+        int_len = x + 1;
+        for (i = 0; i < int_len + decimals + 1; i++) {
+            all[len++] = (i < n) ? d[i] : '0';
+        }
+    } else {
+        int_len = 1;
+        all[len++] = '0';
+        for (i = 0; i < decimals + 1; i++) {
+            int k = i - (-x - 1);
+            all[len++] = (k >= 0 && k < n) ? d[k] : '0';
+        }
+    }
+    /* all = the integer digits, the decimals and one more: round on it */
+    carry = all[len - 1] >= '5';
+    len--;
+    for (i = len - 1; carry && i >= 0; i--) {
+        if (all[i] == '9') {
+            all[i] = '0';
+        } else {
+            all[i]++;
+            carry = 0;
+        }
+    }
+    k = 0;
+    if (carry) {
+        ip[k++] = '1';
+    }
+    for (i = 0; i < int_len; i++) {
+        if (k > 0 || all[i] != '0') {  /* no leading zeros: 0.5 has none */
+            ip[k++] = all[i];
+        }
+    }
+    ip[k] = 0;
+    memcpy(fp, all + int_len, (size_t)decimals);
+    fp[decimals] = 0;
+}
+
+/* kind 0 single, 1 double, 2 integer */
+void mb25_using_num(double v, int kind) {
+    mb25_u_spec f;
+    char d[MB25_FMT_MAX + 2], ip[64], fp[32], body[96], out[128], suffix[6];
+    int width = 0, n, x, decimals, negative, needed, sign_slot, trailing, i, len, fill;
+    mb25_u_field(&f, &width, 1);
+    decimals = f.trail ? f.trail - 1 : 0;
+    if (f.lead + f.trail > 24) {
+        mb25_fail(MB25_E_ILLEGAL_FUNC);
+    }
+    if (kind == 2) {
+        v = (double)(long)v;
+    }
+    negative = v < 0;
+    if (negative) {
+        v = -v;
+    }
+    if (v == 0) {
+        d[0] = '0';
+        n = 1;
+        x = 0;
+    } else {
+        n = mb25_num_digits(d, v, kind == 1, &x);
+    }
+    suffix[0] = 0;
+    if (!f.expo && x >= 16) {
+        /* too big for the layout: '%' and the PRINT form, sign dropped */
+        out[0] = '%';
+        out[1] = ' ';
+        len = 2 + mb25_fmt_num(out + 2, v, kind == 1);
+        mb25_u_text((const uint8_t *)out, len);
+        return;
+    }
+    trailing = f.trailing_sign || f.trailing_minus;
+    if (f.expo) {
+        int int_digits = trailing ? f.lead : f.lead - 1, exponent = 0, e;
+        if (!(n == 1 && d[0] == '0')) {
+            exponent = x + 1 - int_digits;
+            mb25_u_fixed(d, n, x - exponent, decimals, ip, fp);
+        } else {
+            mb25_u_fixed("0", 1, 0, decimals, ip, fp);
+        }
+        e = exponent < 0 ? -exponent : exponent;
+        suffix[0] = kind == 1 ? 'D' : 'E';
+        suffix[1] = exponent >= 0 ? '+' : '-';
+        suffix[2] = (char)('0' + e / 10);
+        suffix[3] = (char)('0' + e % 10);
+        suffix[4] = 0;
+    } else {
+        mb25_u_fixed(d, n, x, decimals, ip, fp);
+        if (f.comma) {
+            char c[96];
+            int l = (int)strlen(ip), k = 0;
+            for (i = 0; i < l; i++) {
+                if (i > 0 && (l - i) % 3 == 0) {
+                    c[k++] = ',';
+                }
+                c[k++] = ip[i];
+            }
+            c[k] = 0;
+            strcpy(ip, c);
+        }
+    }
+    sign_slot = !trailing && (negative || f.leading_sign);
+    needed = (int)strlen(ip) + f.dollar + sign_slot;
+    if (!ip[0] && (needed + 1 <= f.lead || !f.trail)) {
+        strcpy(ip, "0");
+        needed++;
+    }
+    len = 0;
+    if (sign_slot) {
+        body[len++] = negative ? '-' : '+';
+    }
+    if (f.dollar) {
+        body[len++] = '$';
+    }
+    strcpy(body + len, ip);
+    if (f.trail) {
+        strcat(body, ".");
+        strcat(body, fp);
+    }
+    strcat(body, suffix);
+    len = 0;
+    if (needed > f.lead) {
+        out[len++] = '%';
+    } else {
+        fill = f.lead + f.trail + (int)strlen(suffix) - (int)strlen(body);
+        while (fill-- > 0) {
+            out[len++] = f.star ? '*' : ' ';
+        }
+    }
+    strcpy(out + len, body);
+    len = (int)strlen(out);
+    if (f.trailing_sign) {
+        out[len++] = negative ? '-' : '+';
+    } else if (f.trailing_minus) {
+        out[len++] = negative ? '-' : ' ';
+    }
+    mb25_u_text((const uint8_t *)out, len);
+}
+
+/* The end of the list: the text up to the next field, and the new line
+ * unless the list ended with ';' or ','. */
+void mb25_using_end(int newline) {
+    mb25_u_spec f;
+    int width;
+    mb25_u_next(&f, &width, 0);
+    if (newline) {
+        mb25_putc('\n');
+    }
 }

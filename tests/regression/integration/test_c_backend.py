@@ -385,13 +385,6 @@ def test_unsupported_construct_is_a_compile_error(tmp_path):
     assert not (tmp_path / "prog.c").exists()
 
 
-def test_print_using_is_a_compile_error(tmp_path):
-    """It used to print the text %.*f."""
-    result = compile_c(tmp_path, '10 PRINT USING "##.##";3.14159\n')
-    assert result.returncode == 1
-    assert "PRINT USING" in result.stderr
-
-
 def test_error_names_the_line(tmp_path):
     result = compile_c(tmp_path, '10 PRINT 1\n20 TRON\n30 PRINT 2\n')
     assert result.returncode == 1
@@ -479,15 +472,25 @@ def test_generated_c_formats_numbers_in_the_runtime(tmp_path):
     assert not backend.errors
 
 
-def test_error_handling_is_a_compile_error(tmp_path):
-    """ON ERROR GOTO, RESUME, ERROR, ERR and ERL compiled to code that did not work."""
+def test_error_handling_compiles_to_c(tmp_path):
+    """ON ERROR GOTO, RESUME, ERROR, ERR and ERL compile (they used to be refused).
+
+    What they do is checked against the binary in test_c_backend_on_error_using.py.
+    """
+    from src.lexer import Lexer
+    from src.parser import Parser
+    from src.semantic_analyzer import SemanticAnalyzer
+    from src.codegen_backend import Z88dkCBackend
     for source in ('10 ON ERROR GOTO 100\n20 END\n100 RESUME NEXT\n',
                    '10 PRINT ERR\n', '10 PRINT ERL\n', '10 ERROR 5\n',
-                   '10 ON ERROR GOTO 100\n20 A=1/0\n30 END\n100 PRINT ERR;ERL:RESUME NEXT\n'):
-        result = compile_c(tmp_path, source)
-        assert result.returncode == 1, source
-        assert "ON ERROR" in result.stderr, source
-        assert not (tmp_path / "prog.c").exists()
+                   '10 ON ERROR GOTO 100\n20 A=1/0\n30 END\n100 PRINT ERR;ERL:RESUME NEXT\n',
+                   '10 PRINT USING "##.##";3.14159\n'):
+        ast = Parser(Lexer(source).tokenize()).parse()
+        analyzer = SemanticAnalyzer()
+        assert analyzer.analyze(ast), source
+        backend = Z88dkCBackend(analyzer.symbols, {"dialect": "uc80"})
+        backend.generate(ast)
+        assert not backend.errors, (source, backend.errors)
 
 
 def test_on_error_goto_0_still_compiles_to_c(tmp_path):

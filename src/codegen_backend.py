@@ -20,7 +20,7 @@ from abc import ABC, abstractmethod
 from typing import List, Dict, Set, Optional, Any
 from src.ast_nodes import *
 from src.semantic_analyzer import SymbolTable, VarType
-from src.number_format import numeric_digits, SINGLE_DIGITS, DOUBLE_DIGITS, INTEGER_DIGITS
+from src.number_format import numeric_digits, SINGLE_DIGITS, DOUBLE_DIGITS, INTEGER_DIGITS, SINGLE_LIMIT
 
 
 class CodeGenBackend(ABC):
@@ -116,9 +116,16 @@ class Z88dkCBackend(CodeGenBackend):
         self.needs_cvs_helper = False
         self.needs_cvd_helper = False
 
-        # Error handling support
-        self.needs_error_handling = False
-        self.error_handler_line = 0  # Line to jump to on error (0 = no handler)
+        # ON ERROR GOTO (see _collect_error_handling).  With traps, a run-time
+        # error can go to a handler; RESUME and RESUME NEXT need to know which
+        # statement had it, so each statement gets a position label p_N.
+        self.traps = False
+        self.track_statements = False
+        self.position_count = 0
+        self.after_pending = False   # the last statement still needs its after-position
+        self.if_after = {}           # position of an IF -> where RESUME NEXT goes from its condition
+        self.statement_positions = {}  # id(statement node) -> its position
+        self.forced_positions = set()  # ids of statements that need a position anyway
 
         # Memory configuration (can be overridden via config)
         self.config = config or {}
@@ -309,8 +316,6 @@ class Z88dkCBackend(CodeGenBackend):
         code.append('#include <string.h>')
         code.append('#include <math.h>')
         code.append('#include <stdint.h>')
-        if self.needs_error_handling:
-            code.append('#include <setjmp.h>')
         code.append('')
 
         # Helpers for string pool initialization (get SP and BSS_tail)
@@ -409,6 +414,7 @@ class Z88dkCBackend(CodeGenBackend):
 
         # Main function
         code.append('int main() {')
+        main_start = len(code)
         self.indent_level += 1
 
         # Initialize string system
@@ -436,22 +442,12 @@ class Z88dkCBackend(CodeGenBackend):
 
         # GOSUB return stack - for implementing GOSUB/RETURN
         code.append(self.indent() + '/* GOSUB return stack */')
-        code.append(f'#define GOSUB_PUSH(id) do {{ if (gosub_sp >= {self.GOSUB_DEPTH}) {{ '
-                    'fprintf(stderr, "?Out of memory\\n"); return 1; } '
+        code.append(f'#define GOSUB_PUSH(id) do {{ if (gosub_sp >= {self.GOSUB_DEPTH}) '
+                    'mb25_fail(MB25_E_OUT_OF_MEMORY); '
                     'gosub_stack[gosub_sp++] = (id); } while (0)')
         code.append(self.indent() + f'int gosub_stack[{self.GOSUB_DEPTH}];  /* Return IDs (0, 1, 2...) - not line numbers */')
         code.append(self.indent() + 'int gosub_sp = 0;      /* Stack pointer */')
         code.append('')
-
-        # Error handling support
-        if self.needs_error_handling:
-            code.append(self.indent() + '/* Error handling support */')
-            code.append(self.indent() + 'int basic_err = 0;  /* Current error code (ERR) */')
-            code.append(self.indent() + 'int basic_erl = 0;  /* Error line number (ERL) */')
-            code.append(self.indent() + 'int error_handler = 0;  /* Line number of error handler (0 = disabled) */')
-            code.append(self.indent() + 'int error_resume_line = 0;  /* Line to resume after error */')
-            code.append(self.indent() + 'jmp_buf error_jmp;  /* Jump buffer for error handling */')
-            code.append('')
 
         # File I/O support
         if self.max_file_number > 0:
@@ -493,45 +489,28 @@ class Z88dkCBackend(CodeGenBackend):
             code.extend(self._generate_data_array())
             code.append('')
 
-        # Setup error handling if needed
-        if self.needs_error_handling:
-            code.append(self.indent() + '/* Setup error handling */')
-            code.append(self.indent() + 'if (setjmp(error_jmp) != 0) {')
-            self.indent_level += 1
-            code.append(self.indent() + '/* Jump here on error */')
-            code.append(self.indent() + 'if (error_handler > 0) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'goto handle_error;')
-            self.indent_level -= 1
-            code.append(self.indent() + '} else {')
-            self.indent_level += 1
-            code.append(self.indent() + 'fprintf(stderr, "?Error %d in line %d\\n", basic_err, basic_erl);')
-            code.append(self.indent() + 'goto program_end;')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
+        # A run-time error with ON ERROR GOTO armed comes back here (mb25_fail)
+        if self.traps:
+            # longjmp back into main may lose a plain local that changed after
+            # the setjmp, so main's variables, arrays, GOSUB stack and file
+            # tables are static
+            declaration = re.compile(r'^(\s*)(int|float|double|char|long|unsigned|FILE|const) ')
+            code[main_start:] = [declaration.sub(r'\1static \2 ', line) for line in code[main_start:]]
+            code.append(self.indent() + 'if (setjmp(mb25_jmp) != 0) goto handle_error;')
             code.append('')
 
         # Generate code for each line
         for line_node in program.lines:
             code.extend(self._generate_line(line_node))
 
-        # Add error handler jump point if needed
-        if self.needs_error_handling:
-            code.append('')
-            code.append('handle_error:')
-            code.append(self.indent() + '/* Jump to error handler line */')
-            code.append(self.indent() + 'switch(error_handler) {')
-            self.indent_level += 1
-            # Collect all ON ERROR GOTO lines
-            for line_node in program.lines:
-                for stmt in line_node.statements:
-                    if isinstance(stmt, OnErrorStatementNode) and stmt.line_number > 0:
-                        code.append(self.indent() + f'case {stmt.line_number}: goto line_{stmt.line_number};')
-            code.append(self.indent() + 'default: fprintf(stderr, "?Invalid error handler\\n"); goto program_end;')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
+        if self.track_statements:
+            code.extend(self._flush_after_position())
+        if self.traps:
+            # A handler that runs off the end is No RESUME (measured); the end
+            # of the last line must not run on into the handler code
+            code.append(self.indent() + 'if (mb25_in_trap) mb25_fail(MB25_E_NO_RESUME);')
+            code.append(self.indent() + 'goto program_end;')
+            code.extend(self._error_dispatch(program))
 
         # End main
         code.append('')
@@ -658,6 +637,9 @@ class Z88dkCBackend(CodeGenBackend):
         self.data_types = []
         self.data_texts = []       # the item as it was typed: what READ A$ gives
         self.data_starts = []      # (line, index of its first DATA item), for RESTORE n
+        self.data_flags = []       # what READ into a number makes of the item (_data_item_flag)
+        self.data_numbers = {}     # index of a text item -> the number READ stores from it
+        self.data_lines = []       # the DATA line of each item
         self.program_lines = {line_node.line_number for line_node in program.lines}
 
         for line_node in program.lines:
@@ -666,8 +648,12 @@ class Z88dkCBackend(CodeGenBackend):
                     self.data_starts.append((line_node.line_number, len(self.data_values)))
                     for value_expr in stmt.values:
                         self.data_texts.append(self._data_item_text(value_expr))
+                        self.data_lines.append(line_node.line_number)
+                        self.data_flags.append(0)
                         # Evaluate constant expressions
                         if isinstance(value_expr, NumberNode):
+                            if abs(value_expr.value) >= SINGLE_LIMIT:
+                                self.data_flags[-1] = 'O'    # READ of it is Overflow
                             self.data_values.append(value_expr.value)
                             # Determine if it's int or float
                             # Check if the value is a whole number
@@ -680,6 +666,8 @@ class Z88dkCBackend(CodeGenBackend):
                         elif isinstance(value_expr, StringNode):
                             self.data_values.append(value_expr.value)
                             self.data_types.append('string')
+                            self.data_flags[-1], number = self._data_item_flag(value_expr)
+                            self.data_numbers[len(self.data_values) - 1] = number
                         elif isinstance(value_expr, UnaryOpNode) and value_expr.operator in (TokenType.MINUS, TokenType.PLUS):
                             # A signed number: DATA -2.5, DATA +7
                             if isinstance(value_expr.operand, NumberNode):
@@ -695,6 +683,37 @@ class Z88dkCBackend(CodeGenBackend):
                                 self._unsupported(f"Complex expression in DATA not supported: {type(value_expr.operand).__name__}")
                         else:
                             self._unsupported(f"Complex expression in DATA not supported: {type(value_expr).__name__}")
+
+    @staticmethod
+    def _data_item_flag(item: StringNode):
+        """How READ treats a text DATA item, worked out now, and the number it stores.
+
+        As the interpreter's execute_read (measured on the binary): READ into a
+        number of a quoted item stores 0 and is a Syntax error at the DATA line
+        ('Q'); a quoted item with text after the closing quote is that error
+        for a string too, after the string is stored ('T'); unquoted text that
+        is no number stores the number it starts with and is a Syntax error at
+        the DATA line ('N'); &O8 and &9 are a Syntax error at the READ line
+        with nothing stored ('R'); a number too big is Overflow, with nothing
+        stored ('O'). 0: no error.
+        """
+        from src.interpreter import data_text_to_number
+        from src.input_fields import val_text
+        if not getattr(item, 'raw', False):
+            return ('T' if getattr(item, 'bad_tail', False) else 'Q'), 0
+        try:
+            value = data_text_to_number(item.value)
+            return ('O', 0) if abs(value) >= SINGLE_LIMIT else (0, value)
+        except OverflowError:
+            return 'O', 0
+        except ValueError as e:
+            try:
+                value = val_text(item.value)
+            except RuntimeError:
+                return 'R', 0              # &O8, &9: nothing is stored
+            if value in (float('inf'), float('-inf')):
+                return 'O', 0
+            return ('N' if str(e) == 'data' else 'R'), value
 
     @staticmethod
     def _data_item_text(value_expr) -> str:
@@ -809,22 +828,19 @@ class Z88dkCBackend(CodeGenBackend):
         # Add more expression types as needed
 
     def _collect_error_handling(self, program: ProgramNode):
-        """Collect error handling usage"""
-        for line_node in program.lines:
-            for stmt in line_node.statements:
-                if isinstance(stmt, OnErrorStatementNode):
-                    self.needs_error_handling = True
-                    # Track the initial error handler line
-                    if self.error_handler_line == 0 and stmt.line_number > 0:
-                        self.error_handler_line = stmt.line_number
-                elif isinstance(stmt, ResumeStatementNode):
-                    self.needs_error_handling = True
-                elif isinstance(stmt, ErrorStatementNode):
-                    self.needs_error_handling = True
-                elif isinstance(stmt, WriteStatementNode) and self._write_error_code(stmt):
-                    self.needs_error_handling = True
-                elif self._has_syntax_error_statement(stmt):
-                    self.needs_error_handling = True
+        """Whether errors can go to a handler, and whether RESUME needs positions.
+
+        Without an ON ERROR GOTO n, every error stops the program, ERROR n
+        included, and RESUME is RESUME without error. RESUME and RESUME NEXT
+        go back to a statement, so each statement then gets a position (see
+        _generate_tracked_statement); RESUME n needs none.
+        """
+        nodes = [node for line in program.lines for node in self._walk(line.statements)]
+        self.traps = any(isinstance(node, OnErrorStatementNode) and node.line_number
+                         for node in nodes)
+        self.track_statements = self.traps and any(
+            isinstance(node, ResumeStatementNode) and node.line_number in (None, 0, -1)
+            for node in nodes)
 
     @classmethod
     def _has_syntax_error_statement(cls, stmt) -> bool:
@@ -1188,7 +1204,7 @@ class Z88dkCBackend(CodeGenBackend):
 
     def _generate_syntax_error(self, stmt: SyntaxErrorStatementNode) -> List[str]:
         """A statement MBASIC could not parse: Syntax error (2) when the program reaches it."""
-        return [self.indent() + 'mb25_fail("Syntax error");']
+        return [self.indent() + 'mb25_fail(MB25_E_SYNTAX);']
 
     def _generate_variable_declarations(self) -> List[str]:
         """Generate C variable declarations from symbol table"""
@@ -1260,6 +1276,8 @@ class Z88dkCBackend(CodeGenBackend):
 
         # The end value and step of a FOR loop whose bounds are not constants
         for number, loop in sorted(self.for_vars.items()):
+            if self.traps:
+                decls.append(self.indent() + f'char _fa{number} = 0;  /* loop {number} is running */')
             c_type = {VarType.INTEGER: 'int', VarType.DOUBLE: 'double'}.get(
                 self._get_expression_type(loop.variable), 'float')
             if self._constant_value(loop.end_expr) is None:
@@ -1369,6 +1387,17 @@ class Z88dkCBackend(CodeGenBackend):
         code = []
         self.current_line = line_node.line_number
 
+        # The position of the first statement comes before the line's label
+        # and its mb25_line store, so RESUME NEXT from the line above sets it
+        first_position = None
+        if self.track_statements and line_node.statements:
+            first = line_node.statements[0]
+            if self._needs_position(first):
+                first_position = self._position_label(code)
+                self.statement_positions[id(first)] = first_position
+            elif self.after_pending:
+                code.extend(self._flush_after_position())
+
         # Add line label if needed
         if line_node.line_number in self.line_labels:
             # Use goto label syntax: line_100:
@@ -1380,11 +1409,128 @@ class Z88dkCBackend(CodeGenBackend):
             code.append(self.indent() + f'mb25_line = {line_node.line_number}u;')
 
         # Generate code for each statement on the line
-        for stmt in line_node.statements:
-            stmt_code = self._generate_statement(stmt)
-            if stmt_code:
-                code.extend(stmt_code)
+        for index, stmt in enumerate(line_node.statements):
+            code.extend(self._generate_tracked_statement(
+                stmt, first_position if index == 0 else None))
 
+        return code
+
+    def _position_label(self, code: List[str]) -> int:
+        """Emit the next position label p_N; it is also the after-position of
+        the statement before it."""
+        number = self.position_count
+        self.position_count += 1
+        code.append(f'p_{number}:')
+        self.after_pending = False
+        return number
+
+    def _flush_after_position(self) -> List[str]:
+        """The after-position of the last statement, when no statement follows
+        it in the same flow (the end of an IF branch, the end of the program)."""
+        code = []
+        if self.after_pending:
+            self._position_label(code)
+        return code
+
+    def _generate_tracked_statement(self, stmt: Any, position: Optional[int] = None) -> List[str]:
+        """A statement, with its position when RESUME needs one.
+
+        Statement N has the label p_N before it and stores N in mb25_stmt, so an
+        error knows where it happened. RESUME goes back to p_N. RESUME NEXT
+        goes to p_(N+1), which is the label emitted next after the statement -
+        before the next statement, or at the end of an IF branch - except for
+        an IF, whose statements come in between: if_after has those (the
+        position after the IF, or of the second THEN statement).
+        """
+        if not self.track_statements:
+            return self._generate_statement(stmt)
+        code = []
+        if not self._needs_position(stmt):
+            # It cannot fail, so it has no position of its own; the label
+            # before it is the after-position of a statement that can
+            if self.after_pending:
+                self.statement_positions[id(stmt)] = self._position_label(code)
+            code.extend(self._generate_statement(stmt))
+            return code
+        if position is None:
+            position = self._position_label(code)
+        self.statement_positions[id(stmt)] = position
+        if not isinstance(stmt, (RemarkStatementNode, DataStatementNode)):
+            code.append(self.indent() + f'mb25_stmt = {position}u;')
+        if isinstance(stmt, IfStatementNode):
+            then = stmt.then_statements or []
+            if stmt.then_line_number is None and len(then) >= 2:
+                self.forced_positions.add(id(then[1]))   # RESUME NEXT can go there
+        code.extend(self._generate_statement(stmt))
+        if isinstance(stmt, IfStatementNode):
+            after = self._position_label(code)
+            if stmt.then_line_number is None and len(then) >= 2:
+                # RESUME NEXT after an error in the condition goes on at the
+                # second THEN statement: MBASIC skips to the next ':' (measured)
+                after = self.statement_positions[id(then[1])]
+            self.if_after[position] = after
+        else:
+            self.after_pending = True
+        return code
+
+    def _needs_position(self, stmt: Any) -> bool:
+        """Whether a statement can have a run-time error, so RESUME needs its position.
+
+        Each position costs a store and a case in the RESUME switch (about 20
+        bytes under uc80), and a CP/M program has 64K at most, so the plain
+        statements that cannot fail go without: REM, DATA, END, GOTO, and a
+        PRINT or LET of nothing but constants and variables.
+        """
+        if id(stmt) in self.forced_positions:
+            return True
+        if isinstance(stmt, (RemarkStatementNode, DataStatementNode, EndStatementNode,
+                             SystemStatementNode, StopStatementNode, GotoStatementNode,
+                             DefTypeStatementNode, OptionBaseStatementNode)):
+            return False
+
+        def plain(expr):
+            return (isinstance(expr, (StringNode, NumberNode))
+                    or isinstance(expr, VariableNode) and not expr.subscripts
+                    and expr.name.upper() not in ('ERR', 'ERL'))
+        if isinstance(stmt, PrintStatementNode):
+            return bool(stmt.file_number) or not all(plain(e) for e in stmt.expressions)
+        if isinstance(stmt, LetStatementNode):
+            target, value = stmt.variable, stmt.expression
+            if target.subscripts or not plain(value):
+                return True
+            # A constant into an integer can be Overflow; a variable of another
+            # type can be Type mismatch or Overflow
+            if isinstance(value, VariableNode):
+                return self._get_expression_type(value) != self._get_expression_type(target)
+            return self._get_expression_type(target) == VarType.INTEGER
+        return True
+
+    def _error_dispatch(self, program: ProgramNode) -> List[str]:
+        """The code after the last line: the handler jump, and RESUME's."""
+        code = ['handle_error:']
+        code.append('    mb25_set_out(NULL);  /* an error in PRINT # leaves the file selected */')
+        code.append('    switch (mb25_on_error) {')
+        targets = sorted({node.line_number for line in program.lines for node in self._walk(line.statements)
+                          if isinstance(node, OnErrorStatementNode) and node.line_number in self.program_lines})
+        for target in targets:
+            code.append(f'    case {target}u: goto line_{target};')
+        code.append('    default: break;')
+        code.append('    }')
+        code.append('    goto program_end;')
+        if self.track_statements:
+            code.append('resume_next:')
+            code.append('    switch (mb25_err_stmt) {')
+            for position, after in sorted(self.if_after.items()):
+                code.append(f'    case {position}u: mb25_err_stmt = {after}u; goto resume_at;')
+            code.append('    default: mb25_err_stmt++; break;')
+            code.append('    }')
+            code.append('resume_at:')
+            code.append('    switch (mb25_err_stmt) {')
+            for position in range(self.position_count):
+                code.append(f'    case {position}u: goto p_{position};')
+            code.append('    default: break;')
+            code.append('    }')
+            code.append('    goto program_end;')
         return code
 
     def _generate_statement(self, stmt: Any) -> List[str]:
@@ -1595,7 +1741,7 @@ class Z88dkCBackend(CodeGenBackend):
         file_ptr = f'file_handles[(int)({file_num_expr})]'
         code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
         self.indent_level += 1
-        code.append(self.indent() + 'mb25_fail("File not open");')
+        code.append(self.indent() + 'mb25_fail(MB25_E_BAD_FILE_NUM);')
         code.append(self.indent() + 'return 1;')
         self.indent_level -= 1
         code.append(self.indent() + '}')
@@ -1793,9 +1939,19 @@ class Z88dkCBackend(CodeGenBackend):
             return code
 
         var_name = self._mangle_variable_name(self._canonical_basic_name(stmt.variable))
+        if self._get_expression_type(stmt.variable) == VarType.DOUBLE:
+            # A double loop variable is Type mismatch once the start is worked
+            # out, before the limit is read; the variable keeps its value
+            # (measured). No loop starts, so its NEXT is NEXT without FOR.
+            return [self.indent() + f'(void)({self._generate_expression(stmt.start_expr)});',
+                    self.indent() + 'mb25_fail(MB25_E_TYPE);']
         start = self._generate_expression(stmt.start_expr)
         if self._get_expression_type(stmt.variable) == VarType.INTEGER:
             start = self._integer_value(stmt.start_expr)
+        if self.traps:
+            # With ON ERROR the program can go on after a FOR that failed, and
+            # then the loop does not exist: its NEXT is NEXT without FOR
+            code.append(self.indent() + f'_fa{number} = 0;')
 
         var_is_int = self._get_expression_type(stmt.variable) == VarType.INTEGER
 
@@ -1816,6 +1972,15 @@ class Z88dkCBackend(CodeGenBackend):
         else:
             step, step_const = constant_or_temp(stmt.step_expr, f'_fs{number}')
 
+        if var_is_int and any(c is not None and not -32768 <= c <= 32767
+                              for c in (end_const, step_const)):
+            # A constant limit or step outside 16 bits is Overflow before the
+            # variable is set (FRCINT, measured: FOR I%=1 TO 1E10)
+            code.append(self.indent() + f'(void)({start});')
+            code.append(self.indent() + 'mb25_fail(MB25_E_OVERFLOW);')
+            code.append(f'for_{number}_top:')    # the NEXT's jump: no loop to run
+            code.append(self.indent() + f'goto for_{number}_end;')
+            return code
         code.append(self.indent() + f'{var_name} = {start};')
         rounded = (lambda c: f'mb25_cint({c})') if var_is_int else (lambda c: c)
         if end_const is None:
@@ -1841,6 +2006,8 @@ class Z88dkCBackend(CodeGenBackend):
             test = past_up
         else:
             test = past_down
+        if self.traps:
+            code.append(self.indent() + f'_fa{number} = 1;')
         code.append(f'for_{number}_top:')
         code.append(self.indent() + f'if ({test}) goto for_{number}_end;')
         return code
@@ -1850,6 +2017,11 @@ class Z88dkCBackend(CodeGenBackend):
         code = []
         for number in self.next_ids.get(id(stmt), []):
             loop = self.for_vars[number]
+            if self._get_expression_type(loop.variable) == VarType.DOUBLE:
+                code.append(self.indent() + 'mb25_fail(MB25_E_NO_FOR);  /* its FOR failed */')
+                continue
+            if self.traps:
+                code.append(self.indent() + f'if (!_fa{number}) mb25_fail(MB25_E_NO_FOR);')
             var_name = self._mangle_variable_name(self._canonical_basic_name(loop.variable))
             value = None
             var_is_int = self._get_expression_type(loop.variable) == VarType.INTEGER
@@ -1869,7 +2041,11 @@ class Z88dkCBackend(CodeGenBackend):
             else:
                 code.append(self.indent() + f'{var_name} += {step};')
             code.append(self.indent() + f'goto for_{number}_top;')
-            code.append(f'for_{number}_end: ;')
+            if self.traps:
+                code.append(f'for_{number}_end:')
+                code.append(self.indent() + f'_fa{number} = 0;')
+            else:
+                code.append(f'for_{number}_end: ;')
         return code
 
     def _generate_assignment(self, stmt: LetStatementNode) -> List[str]:
@@ -1926,7 +2102,7 @@ class Z88dkCBackend(CodeGenBackend):
             # Check if file is open
             code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
             self.indent_level += 1
-            code.append(self.indent() + f'mb25_fail("File not open");')
+            code.append(self.indent() + f'mb25_fail(MB25_E_BAD_FILE_NUM);')
             code.append(self.indent() + 'return 1;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2072,7 +2248,7 @@ class Z88dkCBackend(CodeGenBackend):
 
     def _generate_end(self, stmt: EndStatementNode) -> List[str]:
         """Generate END statement"""
-        if self.needs_error_handling or self.string_count > 0:
+        if self.traps or self.string_count > 0:
             # Jump to cleanup code
             return [self.indent() + 'goto program_end;']
         else:
@@ -2115,7 +2291,8 @@ class Z88dkCBackend(CodeGenBackend):
             if line_number is not None:
                 lines.append(self.indent() + f'goto line_{line_number};')
             for inner in statements or []:
-                lines.extend(self._generate_statement(inner))
+                lines.extend(self._generate_tracked_statement(inner))
+            lines.extend(self._flush_after_position())
             self.indent_level -= 1
             return lines
 
@@ -2175,8 +2352,9 @@ class Z88dkCBackend(CodeGenBackend):
             elif typ == 'float':
                 code.append(self.indent() + f'{float(val)!r}f,  /* float: {float(val)} */')
             elif typ == 'string':
-                # Use 0 as placeholder for string values
-                code.append(self.indent() + f'0.0f,  /* string placeholder */')
+                # READ into a number of a text item stores this
+                number = float(self.data_numbers.get(i, 0))
+                code.append(self.indent() + f'{number!r}f,  /* text */')
         self.indent_level -= 1
         code.append(self.indent() + '};')
 
@@ -2212,6 +2390,15 @@ class Z88dkCBackend(CodeGenBackend):
         self.indent_level -= 1
         code.append(self.indent() + '};')
 
+        if any(self.data_flags):
+            # The items that READ fails on (_data_item_flag), and the DATA lines
+            code.append(self.indent() + f'static const char data_flag[{len(self.data_flags)}] = {{')
+            code.append(self.indent() + '    ' + ', '.join(f"'{f}'" if f else '0' for f in self.data_flags))
+            code.append(self.indent() + '};')
+            code.append(self.indent() + f'static const unsigned int data_line[{len(self.data_lines)}] = {{')
+            code.append(self.indent() + '    ' + ', '.join(f'{n}u' for n in self.data_lines))
+            code.append(self.indent() + '};')
+
         # Generate data pointer
         code.append(self.indent() + 'int data_pointer = 0;')
 
@@ -2232,19 +2419,26 @@ class Z88dkCBackend(CodeGenBackend):
         code = []
         has_strings = 'string' in self.data_types
         has_numbers = any(t != 'string' for t in self.data_types)
-        number_test = "data_types[data_pointer] == 'I' || data_types[data_pointer] == 'F'"
 
         if not self.data_values:
             # No DATA anywhere: the first READ is "Out of DATA"
-            code.append(self.indent() + 'mb25_fail("Out of DATA");')
+            code.append(self.indent() + 'mb25_fail(MB25_E_OUT_OF_DATA);')
             code.append(self.indent() + 'return 1;')
             return code
 
+        checked = any(self.data_flags)
+        if checked:
+            # A failing item sends the DATA pointer back to the statement's first
+            code.append(self.indent() + '{')
+            self.indent_level += 1
+            code.append(self.indent() + 'int _rp = data_pointer;')
+        syntax_at_data = ('{ mb25_line = data_line[data_pointer]; data_pointer = _rp; '
+                          'mb25_fail(MB25_E_SYNTAX); }')
         for var_node in stmt.variables:
             # Check if we're out of data
             code.append(self.indent() + f'if (data_pointer >= {len(self.data_values)}) {{')
             self.indent_level += 1
-            code.append(self.indent() + 'mb25_fail("Out of DATA");')
+            code.append(self.indent() + 'mb25_fail(MB25_E_OUT_OF_DATA);')
             code.append(self.indent() + 'return 1;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2265,26 +2459,27 @@ class Z88dkCBackend(CodeGenBackend):
                     code.append(self.indent() + '}')
                 elif not has_strings:
                     code.append(self.indent() + '}')
+                if checked:
+                    code.append(self.indent() + f"if (data_flag[data_pointer] == 'T') {syntax_at_data}")
             else:
+                if checked:
+                    code.append(self.indent() + "if (data_flag[data_pointer] == 'O') "
+                                "{ data_pointer = _rp; mb25_fail(MB25_E_OVERFLOW); }")
+                    code.append(self.indent() + "if (data_flag[data_pointer] == 'R') "
+                                "{ data_pointer = _rp; mb25_fail(MB25_E_SYNTAX); }")
+                # data_numeric has the number of a text item too (_data_item_flag)
                 if var_type == VarType.INTEGER:
-                    from_number = f'{target} = mb25_cint(data_numeric[data_pointer]);'
-                    from_string = f'{target} = mb25_cint(mb25_val_cstr(data_strings[data_pointer]));'
+                    code.append(self.indent() + f'{target} = mb25_cint(data_numeric[data_pointer]);')
                 else:
-                    from_number = f'{target} = data_numeric[data_pointer];'
-                    from_string = f'{target} = mb25_val_cstr(data_strings[data_pointer]);'
-                if has_numbers and has_strings:
-                    code.append(self.indent() + f'if ({number_test}) {{')
-                    code.append(self.indent() + f'    {from_number}')
-                    code.append(self.indent() + '} else {')
-                    code.append(self.indent() + f'    {from_string}')
-                    code.append(self.indent() + '}')
-                elif has_numbers:
-                    code.append(self.indent() + from_number)
-                else:
-                    code.append(self.indent() + from_string)
+                    code.append(self.indent() + f'{target} = data_numeric[data_pointer];')
+                if checked:
+                    code.append(self.indent() + f"if (data_flag[data_pointer]) {syntax_at_data}")
 
             code.append(self.indent() + 'data_pointer++;')
 
+        if checked:
+            self.indent_level -= 1
+            code.append(self.indent() + '}')
         return code
 
     def _generate_restore(self, stmt: RestoreStatementNode) -> List[str]:
@@ -2296,7 +2491,7 @@ class Z88dkCBackend(CodeGenBackend):
             code.append(self.indent() + 'data_pointer = 0;')
         elif stmt.line_number not in self.program_lines:
             # RESTORE of a line that is not there is Undefined line number (measured)
-            code.append(self.indent() + 'mb25_fail("Undefined line number");')
+            code.append(self.indent() + 'mb25_fail(MB25_E_UNDEF_LINE);')
         else:
             # The first DATA item at or after the line, worked out now: the line is a constant
             index = next((i for line, i in self.data_starts if line >= stmt.line_number),
@@ -2342,7 +2537,7 @@ class Z88dkCBackend(CodeGenBackend):
         """The code that sends RETURN back to the GOSUB that called."""
         code = ['gosub_dispatch:']
         code.append('    if (gosub_sp <= 0) {')
-        code.append('        mb25_fail("RETURN without GOSUB");')
+        code.append('        mb25_fail(MB25_E_NO_GOSUB);')
         code.append('        return 1;')
         code.append('    }')
         code.append('    switch (gosub_stack[--gosub_sp]) {')
@@ -2646,7 +2841,7 @@ class Z88dkCBackend(CodeGenBackend):
             code.append(self.indent() + f'file_modes[_file_num] = \'{stmt.mode}\';')
             code.append(self.indent() + 'if (!file_handles[_file_num]) {')
             self.indent_level += 1
-            code.append(self.indent() + 'mb25_fail("File not found");')
+            code.append(self.indent() + 'mb25_fail(MB25_E_FILE_NOT_FOUND);')
             # In a real implementation, should trigger ON ERROR GOTO if set
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2726,7 +2921,7 @@ class Z88dkCBackend(CodeGenBackend):
             # Check if file is open
             code.append(self.indent() + f'if ({file_ptr} == NULL) {{')
             self.indent_level += 1
-            code.append(self.indent() + f'mb25_fail("File not open");')
+            code.append(self.indent() + f'mb25_fail(MB25_E_BAD_FILE_NUM);')
             code.append(self.indent() + 'return 1;')
             self.indent_level -= 1
             code.append(self.indent() + '}')
@@ -2810,7 +3005,7 @@ class Z88dkCBackend(CodeGenBackend):
         self.indent_level += 1
         code.append(self.indent() + 'if (remove(_filename) != 0) {')
         self.indent_level += 1
-        code.append(self.indent() + 'mb25_fail("File not found");')
+        code.append(self.indent() + 'mb25_fail(MB25_E_FILE_NOT_FOUND);')
         self.indent_level -= 1
         code.append(self.indent() + '}')
         # No free needed - temp string will be GC'd
@@ -2837,28 +3032,29 @@ class Z88dkCBackend(CodeGenBackend):
             self._unsupported("MID$ assignment requires string value")
             return [self.indent() + '/* MID$ requires string value */']
 
-        value_str_expr = self._generate_string_expression(stmt.value)
-
-        # Generate start position and length
-        start_expr = self._integer_value(stmt.start)
-        length_expr = self._integer_value(stmt.length) if stmt.length is not None else '255'
-
+        # The checks of the binary, in its order (see execute_midassignment):
+        # the start is a byte and not 0, then the value is worked out, then the
+        # count is a byte; a count of 0 does nothing, and a start beyond the end
+        # of the target is Illegal function call.
         code.append(self.indent() + '{')
         self.indent_level += 1
-
-        # Get current string data
+        code.append(self.indent() + f'int _start = mb25_byte({self._integer_value(stmt.start)});')
+        code.append(self.indent() + 'if (_start == 0) mb25_fail(MB25_E_ILLEGAL_FUNC);')
+        temp_id = self._get_temp_string_id()
+        value_str_expr = self._generate_string_expression(stmt.value)
+        code.append(self.indent() + f'char *_repl = mb25_get_c_string_temp({value_str_expr}, {temp_id});')
+        code.append(self.indent() + 'int _srclen = _repl ? (int)strlen(_repl) : 0;')
+        if stmt.length is not None:
+            code.append(self.indent() + f'int _repllen = mb25_byte({self._integer_value(stmt.length)});')
+        else:
+            code.append(self.indent() + 'int _repllen = _srclen;')
+        # The target's data last: working out the value can move it
         code.append(self.indent() + f'uint8_t *_data = mb25_get_data({var_str_id});')
         code.append(self.indent() + f'uint16_t _len = mb25_get_length({var_str_id});')
-
-        # Get replacement string using temp pool (no malloc!)
-        temp_id = self._get_temp_string_id()
-        code.append(self.indent() + f'char *_repl = mb25_get_c_string_temp({value_str_expr}, {temp_id});')
-        code.append(self.indent() + 'if (_data && _repl) {')
+        code.append(self.indent() + 'if (_repllen > 0 && _start > _len) mb25_fail(MB25_E_ILLEGAL_FUNC);')
+        code.append(self.indent() + 'if (_repllen > 0 && _data && _repl) {')
         self.indent_level += 1
-
-        code.append(self.indent() + f'int _start = (int)({start_expr}) - 1;  /* Convert to 0-based */')
-        code.append(self.indent() + f'int _repllen = (int)({length_expr});')
-        code.append(self.indent() + 'int _srclen = strlen(_repl);')
+        code.append(self.indent() + '_start--;  /* 0-based */')
 
         # Create new string with replacement
         code.append(self.indent() + 'char _temp[256];')
@@ -2866,13 +3062,9 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + '_temp[_len] = \'\\0\';')
 
         # Replace substring
-        code.append(self.indent() + 'if (_start >= 0 && _start < _len) {')
-        self.indent_level += 1
         code.append(self.indent() + 'int _copylen = (_srclen < _repllen) ? _srclen : _repllen;')
         code.append(self.indent() + 'if (_start + _copylen > _len) _copylen = _len - _start;')
         code.append(self.indent() + 'memcpy(_temp + _start, _repl, _copylen);')
-        self.indent_level -= 1
-        code.append(self.indent() + '}')
 
         # Store back to string variable
         code.append(self.indent() + f'mb25_string_alloc_init({var_str_id}, _temp);')
@@ -2886,16 +3078,47 @@ class Z88dkCBackend(CodeGenBackend):
         return code
 
     def _generate_print_using(self, stmt: PrintUsingStatementNode) -> List[str]:
-        """PRINT USING is not supported.
+        """PRINT USING: the runtime formats each value as it is worked out.
 
-        The code that this backend used to write for it printed the text %.*f
-        for most formats (the uc80 printf has no '*' width) and got the field
-        width wrong for the others, so a program that used it compiled to wrong
-        output without a message.
+        mb25_using_begin takes the format, each value goes to mb25_using_num or
+        mb25_using_text/str in turn (the text of the format up to its field
+        comes first), and mb25_using_end prints the rest of the text up to the
+        next field and the new line. A value of the wrong kind for its field
+        is Type mismatch, after what was printed before it, as on 5.21.
         """
-        self._unsupported("PRINT USING (the C backend has no formatter for it; "
-                          "use the interpreter, or compile to JavaScript)")
-        return []
+        code = []
+        if stmt.file_number:
+            code.extend(self._open_output_file(stmt.file_number))
+        fmt = stmt.format_string
+        if self._get_expression_type(fmt) != VarType.STRING:
+            code.append(self.indent() + 'mb25_fail(MB25_E_TYPE);')
+        elif isinstance(fmt, StringNode):
+            code.append(self.indent() + f'mb25_using_begin("{self._escape_string(fmt.value)}", '
+                        f'{len(fmt.value)});')
+        else:
+            code.append(self.indent() + f'mb25_using_begin_id({self._generate_string_expression(fmt)});')
+        for expr in stmt.expressions:
+            if self._get_expression_type(expr) == VarType.STRING:
+                if isinstance(expr, StringNode):
+                    code.append(self.indent() + f'mb25_using_text("{self._escape_string(expr.value)}", '
+                                f'{len(expr.value)});')
+                else:
+                    code.append(self.indent() + f'mb25_using_str({self._generate_string_expression(expr)});')
+                continue
+            kind = self._numeric_kind(expr)
+            if kind == VarType.INTEGER and (self._get_expression_type(expr) != VarType.INTEGER
+                                            or self._is_int_arith(expr)):
+                kind = VarType.SINGLE    # as in _print_number: 32768 is no integer
+            if kind == VarType.INTEGER:
+                code.append(self.indent() + f'mb25_using_num((double)({self._integer_value(expr)}), 2);')
+            else:
+                code.append(self.indent() + f'mb25_using_num((double)({self._wide_value(expr)}), '
+                            f'{1 if kind == VarType.DOUBLE else 0});')
+        newline = 0 if getattr(stmt, 'trailing_separator', False) else 1
+        code.append(self.indent() + f'mb25_using_end({newline});')
+        if stmt.file_number:
+            code.append(self.indent() + 'mb25_set_out(NULL);')
+        return code
 
     def _generate_write(self, stmt: WriteStatementNode) -> List[str]:
         """Generate WRITE statement - values separated by commas, strings quoted"""
@@ -2920,8 +3143,7 @@ class Z88dkCBackend(CodeGenBackend):
                 code.append(self.indent() + 'mb25_putc(\',\');')
             if stmt.file_number:
                 code.append(self.indent() + 'mb25_set_out(NULL);')
-            message = 'Missing operand' if error_code == 22 else 'Syntax error'
-            code.append(self.indent() + f'mb25_fail("{message}");')
+            code.append(self.indent() + f'mb25_fail({error_code});  /* Missing operand or Syntax error */')
             return code
 
         code.append(self.indent() + 'mb25_print_nl();')
@@ -3003,15 +3225,9 @@ class Z88dkCBackend(CodeGenBackend):
                 # Check for special built-in variables
                 var_upper = expr.name.upper()
                 if var_upper == 'ERR':
-                    self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
-                "handler: run-time errors end the program and ignore ON ERROR)"))
-                    self.needs_error_handling = True
-                    return 'basic_err'
+                    return 'mb25_err'
                 elif var_upper == 'ERL':
-                    self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
-                "handler: run-time errors end the program and ignore ON ERROR)"))
-                    self.needs_error_handling = True
-                    return 'basic_erl'
+                    return '(float)mb25_erl'
                 else:
                     return self._mangle_variable_name(self._canonical_basic_name(expr))
         elif isinstance(expr, BinaryOpNode):
@@ -3234,20 +3450,14 @@ class Z88dkCBackend(CodeGenBackend):
             if len(expr.arguments) != 0:
                 self._unsupported("ERR takes no arguments")
                 return '0'
-            self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
-                "handler: run-time errors end the program and ignore ON ERROR)"))
-            self.needs_error_handling = True
-            return 'basic_err'
+            return 'mb25_err'
 
         elif func_name == 'ERL':
             # ERL returns error line number
             if len(expr.arguments) != 0:
                 self._unsupported("ERL takes no arguments")
                 return '0'
-            self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
-                "handler: run-time errors end the program and ignore ON ERROR)"))
-            self.needs_error_handling = True
-            return 'basic_erl'
+            return '(float)mb25_erl'
 
         # File I/O functions
         elif func_name == 'EOF':
@@ -3683,81 +3893,42 @@ class Z88dkCBackend(CodeGenBackend):
         return '0'
 
     def _generate_on_error(self, stmt: OnErrorStatementNode) -> List[str]:
-        """Generate ON ERROR GOTO/GOSUB statement"""
-        code = []
+        """ON ERROR GOTO n arms the handler; ON ERROR GOTO 0 disarms it.
 
+        A line that is not in the program is Undefined line number when the
+        statement runs (measured). ON ERROR GOTO 0 inside the handler stops
+        the program with the error it is handling (mb25_trap_off).
+        """
         if stmt.line_number == 0:
-            # ON ERROR GOTO 0 - disable error handling
-            code.append(self.indent() + 'error_handler = 0;  /* Disable error handling */')
-        else:
-            self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
-                "handler: run-time errors end the program and ignore ON ERROR)"))
-            # ON ERROR GOTO line_number - set error handler
-            code.append(self.indent() + f'error_handler = {stmt.line_number};  /* Set error handler */')
-            # Ensure the target line has a label
-            self.line_labels.add(stmt.line_number)
-
-        return code
+            return [self.indent() + 'mb25_trap_off();']
+        if stmt.line_number not in self.program_lines:
+            return [self.indent() + 'mb25_fail(MB25_E_UNDEF_LINE);']
+        return [self.indent() + f'mb25_on_error = {stmt.line_number}u;']
 
     def _generate_resume(self, stmt: ResumeStatementNode) -> List[str]:
-        """Generate RESUME statement"""
-        code = []
-        self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
-                "handler: run-time errors end the program and ignore ON ERROR)"))
+        """RESUME, RESUME 0, RESUME NEXT (line_number -1) and RESUME n.
 
-        if stmt.line_number is None:
-            # RESUME - retry the statement that caused the error
-            code.append(self.indent() + '/* RESUME - retry error statement */')
-            code.append(self.indent() + 'basic_err = 0;')
-            code.append(self.indent() + 'basic_erl = 0;')
-            code.append(self.indent() + 'if (error_resume_line > 0) {')
-            self.indent_level += 1
-            code.append(self.indent() + 'switch(error_resume_line) {')
-            self.indent_level += 1
-            # Would need to generate cases for each line that could cause errors
-            code.append(self.indent() + '/* Jump to error line - not fully implemented */')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-            self.indent_level -= 1
-            code.append(self.indent() + '}')
-        elif stmt.line_number == -1:
-            # RESUME NEXT (parser uses -1 as sentinel for NEXT)
-            code.append(self.indent() + '/* RESUME NEXT - continue after error */')
-            code.append(self.indent() + 'basic_err = 0;')
-            code.append(self.indent() + 'basic_erl = 0;')
-            code.append(self.indent() + '/* Continue execution - handled by normal flow */')
-        elif stmt.line_number == 0:
-            # RESUME 0 - same as RESUME (retry error statement)
-            code.append(self.indent() + '/* RESUME 0 - retry error statement */')
-            code.append(self.indent() + 'basic_err = 0;')
-            code.append(self.indent() + 'basic_erl = 0;')
-            code.append(self.indent() + '/* Retry logic not fully implemented */')
-        else:
-            # RESUME line_number - continue at specific line
-            code.append(self.indent() + f'/* RESUME {stmt.line_number} */')
-            code.append(self.indent() + 'basic_err = 0;')
-            code.append(self.indent() + 'basic_erl = 0;')
+        mb25_resume() is RESUME without error when no error is being handled,
+        and otherwise ends the handling and makes the line ERL again. Then
+        RESUME goes to the position of the statement that had the error, and
+        RESUME NEXT to the one after it (see _error_dispatch).
+        """
+        code = [self.indent() + 'mb25_resume();']
+        if stmt.line_number in (None, 0, -1):
+            if not self.track_statements:
+                # No ON ERROR GOTO n: mb25_resume() has stopped the program
+                return code
+            target = 'resume_next' if stmt.line_number == -1 else 'resume_at'
+            code.append(self.indent() + f'goto {target};')
+        elif stmt.line_number in self.program_lines:
             code.append(self.indent() + f'goto line_{stmt.line_number};')
-            # Ensure the target line has a label
-            self.line_labels.add(stmt.line_number)
-
+        else:
+            code.append(self.indent() + 'mb25_fail(MB25_E_UNDEF_LINE);')
         return code
 
     def _generate_error(self, stmt: ErrorStatementNode) -> List[str]:
-        """Generate ERROR statement - trigger an error"""
-        code = []
-        self._unsupported(("ON ERROR GOTO, RESUME, ERROR, ERR and ERL (the C backend has no error "
-                "handler: run-time errors end the program and ignore ON ERROR)"))
-
-        error_code = self._generate_expression(stmt.error_code)
-        code.append(self.indent() + f'/* ERROR statement */')
-        code.append(self.indent() + f'basic_err = (int)({error_code});')
-        # Get current line number - would need to track this
-        code.append(self.indent() + f'basic_erl = {stmt.line_num};  /* Current line number */')
-        code.append(self.indent() + f'error_resume_line = {stmt.line_num};')
-        code.append(self.indent() + 'longjmp(error_jmp, 1);  /* Trigger error handler */')
-
-        return code
+        """ERROR n: the error with code n (mb25_error checks that n is a byte, not 0)."""
+        return [self.indent() + f'mb25_error({self._generate_expression(stmt.error_code)});']
 
     def _generate_field(self, stmt: FieldStatementNode) -> List[str]:
         """Generate FIELD statement for random access files"""
@@ -4013,7 +4184,7 @@ class Z88dkCBackend(CodeGenBackend):
             key = self._erase_key(name)
             if key not in self.array_ranks:
                 # Nothing in the program ever dimensions it
-                code.append(self.indent() + 'mb25_fail("Illegal function call");')
+                code.append(self.indent() + 'mb25_fail(MB25_E_ILLEGAL_FUNC);')
                 continue
             code.append(self._erase_array_code(key))
         return code
@@ -4078,7 +4249,7 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + f'mb25_get_string_data({new_filename}, _new_name, sizeof(_new_name));')
         code.append(self.indent() + 'if (rename(_old_name, _new_name) != 0) {')
         self.indent_level += 1
-        code.append(self.indent() + 'mb25_fail("File not found");')
+        code.append(self.indent() + 'mb25_fail(MB25_E_FILE_NOT_FOUND);')
         self.indent_level -= 1
         code.append(self.indent() + '}')
 
@@ -4166,8 +4337,8 @@ class Z88dkCBackend(CodeGenBackend):
         code.append(self.indent() + 'gosub_sp = 0;')
         if self.data_values:
             code.append(self.indent() + 'data_pointer = 0;')
-        if self.needs_error_handling:
-            code.append(self.indent() + 'error_handler = 0;')
+        if self.traps:
+            code.append(self.indent() + 'mb25_on_error = 0;')
 
         # Close all files (same as RESET) - only if files are actually used
         if self.max_file_number > 0:

@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <setjmp.h>
 
 /* Configuration - set at compile time based on BASIC program analysis */
 #ifndef MB25_NUM_STRINGS
@@ -204,7 +205,6 @@ int mb25_int16(double v);             /* CINT that stops with Overflow out of ra
 int mb25_idiv(int a, int b);          /* \ with Division by zero */
 int mb25_imod(int a, int b);          /* MOD with Division by zero */
 double mb25_idivd(int a, int b);      /* \ whose quotient may be 32768 */
-void mb25_warn(const char *msg);      /* Division by zero / Overflow, then go on */
 double mb25_fdiv(double a, double b); /* / */
 double mb25_fmul(double a, double b); /* * on floats */
 double mb25_fadd(double a, double b); /* + on floats */
@@ -229,7 +229,46 @@ void mb25_ea_dim(char *st, int *rk, int k);
 int mb25_ea_erase(char *st, int *rk, int *n);
 int mb25_ea_clear(char *st, int *rk, int *n);
 extern unsigned int mb25_line;                /* the BASIC line that is running */
-void mb25_fail(const char *msg);     /* print ?msg in LINE and stop */
+
+/* ===== Run-time errors and ON ERROR GOTO =====
+ *
+ * An error is MBASIC's error code (src/error_codes.py).  mb25_fail(code)
+ * stops the program with the message "in" the line - or, while ON ERROR GOTO
+ * is armed and no error is being handled, sets ERR and ERL and longjmps to
+ * mb25_jmp, where main() goes to the handler.  mb25_warn(code) is Division by
+ * zero or Overflow in a float expression: a message and the program goes on,
+ * unless ON ERROR GOTO is armed. */
+#define MB25_E_NO_FOR        1
+#define MB25_E_SYNTAX        2
+#define MB25_E_NO_GOSUB      3
+#define MB25_E_OUT_OF_DATA   4
+#define MB25_E_ILLEGAL_FUNC  5
+#define MB25_E_OVERFLOW      6
+#define MB25_E_OUT_OF_MEMORY 7
+#define MB25_E_UNDEF_LINE    8
+#define MB25_E_SUBSCRIPT     9
+#define MB25_E_DUPLICATE     10
+#define MB25_E_DIV_ZERO      11
+#define MB25_E_TYPE          13
+#define MB25_E_STRING_LONG   15
+#define MB25_E_NO_RESUME     19
+#define MB25_E_NO_ERROR      20
+#define MB25_E_MISSING       22
+#define MB25_E_BAD_FILE_NUM  52
+#define MB25_E_FILE_NOT_FOUND 53
+void mb25_fail(int code);
+void mb25_warn(int code);
+const char *mb25_message(int code); /* the message for a code */
+extern unsigned int mb25_on_error;   /* ON ERROR GOTO line, 0 for none */
+extern char mb25_in_trap;            /* an error is being handled (no RESUME yet) */
+extern int mb25_err;                 /* ERR */
+extern unsigned int mb25_erl;        /* ERL */
+extern unsigned int mb25_stmt;       /* the statement that is running (generated numbers) */
+extern unsigned int mb25_err_stmt;   /* the statement that had the error */
+void mb25_error(double n);           /* ERROR n */
+void mb25_trap_off(void);            /* ON ERROR GOTO 0 */
+void mb25_resume(void);              /* the checks and the ERL rule of RESUME */
+extern jmp_buf mb25_jmp;             /* main() does setjmp here */
 int mb25_eof(FILE *fp);                /* EOF(n) */
 int mb25_input_eof(void);              /* end of keyboard input: ends the program */
 void mb25_chomp(char *s);              /* strip the line end after fgets */
@@ -255,6 +294,16 @@ void mb25_print_int(int v);          /* " 7 " */
 void mb25_print_num(double v, int kind);
 void mb25_write_int(int v);          /* WRITE: no padding spaces */
 void mb25_write_num(double v, int kind);
+
+/* PRINT USING: begin with the format, then one call per value in order,
+ * then end (newline 0 after a final ';' or ','). kind 0 single, 1 double,
+ * 2 integer. */
+void mb25_using_begin(const char *s, int len);
+void mb25_using_begin_id(uint16_t id);
+void mb25_using_num(double v, int kind);
+void mb25_using_text(const char *s, int len);
+void mb25_using_str(uint16_t id);
+void mb25_using_end(int newline);
 
 /* Number to text, as PRINT shows it but without the padding spaces.  buf
  * needs 40 bytes; the return value is the length. */

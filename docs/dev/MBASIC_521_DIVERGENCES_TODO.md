@@ -588,8 +588,8 @@ and ERL, and RESUME NEXT lands in the right place. The edges do not:
   #41). After `ON ERROR GOTO 0` in a handler it names the line that first
   failed, and a handler that runs off the end is `No RESUME in <last line>`,
   as on the binary. One difference stays: it does not check `A$=A` at run
-  time. The C backend refuses programs with `ON ERROR`, so it has no handler
-  edges.
+  time. The C backend has `ON ERROR` since 2026-10-27, with the same edges
+  (`docs/dev/C_BACKEND.md`).
 - Done: `ON ERROR GOSUB` is a `Syntax error` on the binary, at the prompt and
   (for a stored line) when the line runs, as for any bad statement. The
   interpreter and the JavaScript compiler do the same.
