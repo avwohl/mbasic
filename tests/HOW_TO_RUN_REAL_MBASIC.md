@@ -131,6 +131,21 @@ RUN
 Hello from MBASIC!
 ```
 
+### Long-running programs
+
+MBASIC reads the console while a program runs (to look for ^C). When the piped
+input reaches its end, cpmemu stops the running program. A short program
+finishes first, but a loop of some thousand passes does not, and its output
+stops part of the way. For such a program, keep the input open until the
+program runs `SYSTEM`. Send `RUN` only, then wait for cpmemu to exit:
+
+```python
+p = subprocess.Popen(['cpmemu', '../com/mbasic'], stdin=subprocess.PIPE,
+                     stdout=out_file, cwd='tests')
+p.stdin.write(program_text + b'RUN\n'); p.stdin.flush()
+p.wait(timeout=120)          # do not close stdin before the program ends
+```
+
 ### Capturing Output to File
 
 With cpmemu, discard stderr so its startup/exit chatter stays out of the capture:
