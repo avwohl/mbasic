@@ -6,9 +6,10 @@
 The C backend has no ON ERROR and no PRINT USING, so the program from
 utils/fuzz_real.py is first run on real MBASIC to find the lines that give an
 error.  The 10-line block of each such line is removed (a FOR and its NEXT, or
-an ON GOTO and its targets, stay together), and so are the error handler and
-the PRINT USING lines.  The rest, c_SEED.bas, runs on real MBASIC and as a .com
-built by the C backend under cpmemu.  Exit status 1 when the output differs.
+an ON GOTO and its targets, stay together), and so are the error handler, the
+PRINT USING lines and the CDBL lines (a uc80 double is 32 bits).  The rest,
+c_SEED.bas, runs on real MBASIC and as a .com built by the C backend under
+cpmemu.  Exit status 1 when the output differs.
 """
 import argparse
 import re
@@ -21,13 +22,15 @@ from fuzz_real import MODES, c_output, default_out, generate, printable, real_ou
 
 
 def c_safe(src: str) -> str:
-    """Remove the error handler, PRINT USING and each block with a line that errs on the binary."""
+    """Remove the error handler, PRINT USING, CDBL and each block with a line that errs on the binary."""
     lines = [line for line in src.split('\n') if line]
     first = real_output(src)
     errs = {int(m.group(1)) for line in first for m in [re.search(r'E \d+ +(\d+) *$', line)] if m}
     bad_blocks = {e // 10 for e in errs}
     keep = [line for line in lines if int(line.split(' ')[0]) // 10 not in bad_blocks
-            and not line.startswith(('1 ON ERROR', '30000 ')) and 'USING' not in line]
+            and not line.startswith(('1 ON ERROR', '30000 ')) and 'USING' not in line
+            # a uc80 double is 32 bits, printed with 7 digits (docs/dev/UC80_BUGS_TODO.md)
+            and 'CDBL' not in line]
     return '\n'.join(keep) + '\n'
 
 

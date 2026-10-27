@@ -110,8 +110,9 @@
 - **`fuzz_real_c.py`** - The same test for the C backend
   - `python3 utils/fuzz_real_c.py SEED [SEED ...] [--mode MODE]`
   - Removes each line block that gives an error on the binary, the error
-    handler and PRINT USING (the C backend has neither), builds the rest with
-    `--compile-c` (uc80) and runs the .com under cpmemu
+    handler and PRINT USING (the C backend has neither), and CDBL (a uc80
+    double is 32 bits). Builds the rest with `--compile-c` (uc80) and runs
+    the .com under cpmemu
 
 - **`run_real_mbasic.py`** - Run real MBASIC with piped input and keep stdin
   open until the program ends (cpmemu stops a running program at end of input)
