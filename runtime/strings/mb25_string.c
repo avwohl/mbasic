@@ -1087,6 +1087,9 @@ double mb25_pow(double x, double y) {
         mb25_warn("Division by zero");
         return mb25_big(0);
     }
+    if (x == 0) {
+        return y == 0 ? 1 : 0;   /* 0^.5 is 0; the uc80 pow() goes through log(0) */
+    }
     if (x < 0 && floor(y) != y) {
         mb25_fail("Illegal function call");
     }

@@ -149,6 +149,8 @@ CASES = [
     ('PRINT VAL(" 1 2");VAL("3 E 2");VAL("1 2.5 x")', ' 12  300  12.5 \n'),
     ('PRINT "abc";POS(1);"x";POS("a")', 'abc 4 x 8 \n'),
     ('DATA 1,2:READ A,B:RESTORE 10:READ C:PRINT A;B;C', ' 1  2  1 \n'),
+    # 0 to a positive power is 0, also a fractional one
+    ('Z=0:PRINT 0^0.5;0^0;Z^1.5;Z^3', ' 0  1  0  0 \n'),
     # an integer FOR rounds its limit and step like FRCINT (STEP .5 is STEP 1)
     ('FOR I%=0.1 TO 1 STEP 0.5:PRINT I%;:NEXT:PRINT "/";I%', ' 0  1 / 2 \n'),
     ('S=0.5:E=2.6:FOR J%=0 TO E STEP S:PRINT J%;:NEXT:PRINT "/";J%', ' 0  1  2  3 / 4 \n'),
