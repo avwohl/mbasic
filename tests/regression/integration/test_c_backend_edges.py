@@ -149,6 +149,10 @@ CASES = [
     ('PRINT VAL(" 1 2");VAL("3 E 2");VAL("1 2.5 x")', ' 12  300  12.5 \n'),
     ('PRINT "abc";POS(1);"x";POS("a")', 'abc 4 x 8 \n'),
     ('DATA 1,2:READ A,B:RESTORE 10:READ C:PRINT A;B;C', ' 1  2  1 \n'),
+    # an integer FOR rounds its limit and step like FRCINT (STEP .5 is STEP 1)
+    ('FOR I%=0.1 TO 1 STEP 0.5:PRINT I%;:NEXT:PRINT "/";I%', ' 0  1 / 2 \n'),
+    ('S=0.5:E=2.6:FOR J%=0 TO E STEP S:PRINT J%;:NEXT:PRINT "/";J%', ' 0  1  2  3 / 4 \n'),
+    ('FOR K%=5 TO 0.4 STEP -1.5:PRINT K%;:NEXT:PRINT "/";K%', ' 5  3  1 /-1 \n'),
     # a signed DATA number; READ into a string takes the item as it was typed
     ('DATA +7,-2,1E3:READ A$,B$,C$:RESTORE:READ D:PRINT A$;B$;C$;D', '+7-21E3 7 \n'),
 ]

@@ -299,6 +299,18 @@ def test_strings_with_backslash_and_near(tmp_path):
 
 
 @NEEDS_TOOLCHAIN
+def test_on_index_rounds_and_data_numbers_skip_blanks(tmp_path):
+    """ON 1.5 GOTO takes the second line and ON 2.5 falls through; READ of DATA 1 2
+    is 12 and &H10 is 16 (measured on MBASIC 5.21; the C backend truncated and
+    stopped at the blank)."""
+    source = ('10 ON 1.5 GOTO 20,30\n20 PRINT "a":GOTO 40\n30 PRINT "b"\n'
+              '40 ON 2.5 GOSUB 60,70:PRINT "f"\n50 READ A,B%,C:PRINT A;B%;C:GOTO 80\n'
+              '60 PRINT "s1":RETURN\n70 PRINT "s2":RETURN\n80 DATA 1 2,3 4,&H10\n90 SYSTEM\n')
+    assert compile_c(tmp_path, source).returncode == 0
+    assert run_compiled(tmp_path, "") == "b\nf\n 12  34  16 \n"
+
+
+@NEEDS_TOOLCHAIN
 def test_on_gosub_and_if_else_line(tmp_path):
     check_same(tmp_path, """10 FOR I=1 TO 3
 20 ON I GOSUB 100,200,300

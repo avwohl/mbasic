@@ -940,7 +940,7 @@ double mb25_atof(const char *s) {
 
 /* VAL of a text: &H and &O numbers are read as 16-bit words (&HFFFF is -1);
  * anything else is a decimal number. */
-static double mb25_val_text(const char *s) {
+double mb25_val_cstr(const char *s) {
     int base = 0, digit;
     double v = 0;
     while (*s == ' ' || *s == '\t') {
@@ -997,7 +997,7 @@ double mb25_val(uint16_t id) {
     }
     memcpy(t, d, n);
     t[n] = 0;
-    return mb25_val_text(t);
+    return mb25_val_cstr(t);
 }
 
 /* INSTR([start,] a$, b$): 1-based position of b$ in a$, or 0 */

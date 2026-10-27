@@ -1078,8 +1078,13 @@ Each item was measured on the binary. Test:
   test, run against the C backend, found more, done there: `VAL` skips
   blanks inside a number, `POS` exists, `RESTORE n` goes to line n, a DATA
   item `+7` compiles, and `READ A$` of a number item takes the text as it
-  was typed. Tests: `test_function_argument_edges.py`,
-  `test_c_backend_edges.py`.
+  was typed. A second run against the C backend found three more, done:
+  `ON x GOTO` and `ON x GOSUB` round the index (`ON 1.5` takes the second
+  line), `READ` of a text DATA item into a number skips blanks like `VAL`
+  (`DATA 1 2` is 12), and an integer `FOR` rounds its limit and step (`STEP
+  .5` is `STEP 1`; it was 0, a loop that never ended). Tests:
+  `test_function_argument_edges.py`, `test_c_backend_edges.py`,
+  `test_c_backend.py`.
   Still different, by design (MBF arithmetic is not emulated): `100^16`
   prints 9.99999E+31 on the binary, a single product between 1.70141E+38
   and 3.4E+38 is Overflow there, and `32768*-32769` prints -1.07377E+09.

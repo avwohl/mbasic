@@ -14,6 +14,7 @@ and generates executable code in the target language.
 """
 
 import dataclasses
+import math
 import re
 from abc import ABC, abstractmethod
 from typing import List, Dict, Set, Optional, Any
@@ -1796,9 +1797,16 @@ class Z88dkCBackend(CodeGenBackend):
         if self._get_expression_type(stmt.variable) == VarType.INTEGER:
             start = self._integer_value(stmt.start_expr)
 
+        var_is_int = self._get_expression_type(stmt.variable) == VarType.INTEGER
+
         def constant_or_temp(expr, name):
             value = self._constant_value(expr)
             if value is not None:
+                if var_is_int and isinstance(value, (int, float)) and not float(value).is_integer():
+                    # An integer loop rounds its limit and step like FRCINT: STEP .5 is
+                    # STEP 1 (measured); a truncated 0 would loop for ever
+                    value = math.copysign(math.floor(abs(value) + 0.5), value)
+                    value = int(value)
                 return self._number_literal(value), value
             return name, None
 
@@ -1809,13 +1817,13 @@ class Z88dkCBackend(CodeGenBackend):
             step, step_const = constant_or_temp(stmt.step_expr, f'_fs{number}')
 
         code.append(self.indent() + f'{var_name} = {start};')
+        rounded = (lambda c: f'mb25_cint({c})') if var_is_int else (lambda c: c)
         if end_const is None:
-            code.append(self.indent() + f'_fe{number} = {self._generate_expression(stmt.end_expr)};')
+            code.append(self.indent() + f'_fe{number} = {rounded(self._generate_expression(stmt.end_expr))};')
         if step_const is None:
-            code.append(self.indent() + f'_fs{number} = {self._generate_expression(stmt.step_expr)};')
+            code.append(self.indent() + f'_fs{number} = {rounded(self._generate_expression(stmt.step_expr))};')
 
         # The sign of STEP picks the direction of the test
-        var_is_int = self._get_expression_type(stmt.variable) == VarType.INTEGER
         end_is_int = end_const is not None and float(end_const).is_integer() \
             or end_const is None and self._get_expression_type(stmt.end_expr) == VarType.INTEGER
         both_int = var_is_int and end_is_int
@@ -1844,16 +1852,19 @@ class Z88dkCBackend(CodeGenBackend):
             loop = self.for_vars[number]
             var_name = self._mangle_variable_name(self._canonical_basic_name(loop.variable))
             value = None
+            var_is_int = self._get_expression_type(loop.variable) == VarType.INTEGER
             if loop.step_expr is None:
                 step = '1'
             else:
                 value = self._constant_value(loop.step_expr)
+                if (var_is_int and isinstance(value, (int, float))
+                        and not float(value).is_integer()):
+                    # rounded like FRCINT, as the FOR did (STEP .5 is STEP 1)
+                    value = int(math.copysign(math.floor(abs(value) + 0.5), value))
                 step = self._number_literal(value) if value is not None else f'_fs{number}'
-            if self._get_expression_type(loop.variable) == VarType.INTEGER and (
-                    loop.step_expr is None
-                    or (value is not None and float(value).is_integer())
-                    or (value is None and self._get_expression_type(loop.step_expr) == VarType.INTEGER)):
+            if var_is_int:
                 # An integer counter that steps past 32767 or -32768 is Overflow.
+                # (A step worked out at run time went through mb25_cint at the FOR.)
                 code.append(self.indent() + f'{var_name} = mb25_iadd({var_name}, {step});')
             else:
                 code.append(self.indent() + f'{var_name} += {step};')
@@ -2257,10 +2268,10 @@ class Z88dkCBackend(CodeGenBackend):
             else:
                 if var_type == VarType.INTEGER:
                     from_number = f'{target} = mb25_cint(data_numeric[data_pointer]);'
-                    from_string = f'{target} = mb25_cint(mb25_atof(data_strings[data_pointer]));'
+                    from_string = f'{target} = mb25_cint(mb25_val_cstr(data_strings[data_pointer]));'
                 else:
                     from_number = f'{target} = data_numeric[data_pointer];'
-                    from_string = f'{target} = mb25_atof(data_strings[data_pointer]);'
+                    from_string = f'{target} = mb25_val_cstr(data_strings[data_pointer]);'
                 if has_numbers and has_strings:
                     code.append(self.indent() + f'if ({number_test}) {{')
                     code.append(self.indent() + f'    {from_number}')
@@ -2353,7 +2364,8 @@ class Z88dkCBackend(CodeGenBackend):
         index_expr = self._generate_expression(stmt.expression)
 
         # Generate switch statement
-        code.append(self.indent() + f'switch ((int)({index_expr})) {{')
+        # The index is rounded and must be a byte: ON 1.5 takes the second line (measured)
+        code.append(self.indent() + f'switch (mb25_byte(mb25_cint({index_expr}))) {{')
         self.indent_level += 1
 
         # Generate cases for each line number
@@ -2379,7 +2391,8 @@ class Z88dkCBackend(CodeGenBackend):
         index_expr = self._generate_expression(stmt.expression)
 
         # Generate switch statement
-        code.append(self.indent() + f'switch ((int)({index_expr})) {{')
+        # The index is rounded and must be a byte: ON 1.5 takes the second line (measured)
+        code.append(self.indent() + f'switch (mb25_byte(mb25_cint({index_expr}))) {{')
         self.indent_level += 1
 
         # Generate cases for each line number

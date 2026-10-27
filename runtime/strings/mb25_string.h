@@ -194,6 +194,7 @@ uint16_t mb25_string_of_first(uint16_t id, int n, uint16_t src);
 uint16_t mb25_radix(uint16_t id, int v, int base);            /* HEX$, OCT$ */
 int mb25_asc(uint16_t id);
 double mb25_val(uint16_t id);
+double mb25_val_cstr(const char *s);  /* VAL of a C string; READ of a text DATA item */
 double mb25_atof(const char *s);      /* library atof fails on uc80 */
 int mb25_instr(int start, uint16_t a, uint16_t b);
 
