@@ -209,6 +209,10 @@ DEFAULT_RECORD_LENGTH = 128
 #: (INTEGER_DIGITS), so it cannot stand for the missing value.
 _UNCACHED = object()
 
+# The operators that take 16-bit integer operands.
+_INTEGER_BINARY_OPS = frozenset((
+    TokenType.BACKSLASH, TokenType.MOD, TokenType.AND, TokenType.OR,
+    TokenType.XOR, TokenType.EQV, TokenType.IMP))
 # The operators a pair of strings may use: concatenation and comparison.
 _STRING_BINARY_OPS = frozenset((
     TokenType.PLUS, TokenType.EQUAL, TokenType.NOT_EQUAL, TokenType.LESS_THAN,
@@ -2277,6 +2281,11 @@ class Interpreter:
 
         step = loop_info['step']
         new_value = current if suppress_increment else current + step
+        if not suppress_increment and isinstance(new_value, float) and type_suffix != '#':
+            # A single loop variable steps in single precision, as any single
+            # addition does: FOR I=1E10 TO 1E10 STEP 3 never ends on the binary,
+            # because 1E10+3 is 1E10 again.
+            new_value = self._range_checked(new_value, SINGLE_DIGITS)
 
         # MBASIC increments first and leaves the variable at the value that
         # ended the loop, so FOR I=1 TO 3: NEXT: PRINT I prints 4, not 3.
@@ -4708,9 +4717,15 @@ class Interpreter:
     def _binaryop_value(self, expr):
         """The arithmetic itself, before precision is applied."""
         left = self.evaluate_expression(expr.left)
-        right = self.evaluate_expression(expr.right)
-
         op = expr.operator
+        if op in _INTEGER_BINARY_OPS:
+            # The binary makes the left operand a 16-bit integer before it
+            # reads the right one: 65535 AND 1/0 is Overflow, not Division by
+            # zero, and "a" AND 1/0 is Type mismatch.
+            if isinstance(left, str):
+                raise TypeError("Type mismatch")
+            to_frcint(left)
+        right = self.evaluate_expression(expr.right)
 
         # A string with a number, or two strings under anything but + and the
         # comparisons, is Type mismatch on the binary. Python would raise its

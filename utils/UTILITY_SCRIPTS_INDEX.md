@@ -96,6 +96,27 @@
     wrong for a DIFF, so read the report first
   - Known differences: `docs/dev/TESTS_VERIFIED_AGAINST_BINARY.md`
 
+- **`fuzz_real.py`** - Random differential test against the real MBASIC 5.21
+  binary
+  - `python3 utils/fuzz_real.py SEED [SEED ...] [--mode misc|flow|calls|data] [--js] [--c]`
+  - Writes a random program for each seed (default folder: `mbasic_fuzz` in
+    the system temp folder, or `--out DIR`), runs it on the binary under cpmemu
+    and on the interpreter (and JS with `--js`), and prints a diff for each
+    implementation that differs. The same seed always gives the same program
+  - The values stay where MBF and IEEE agree. MBF arithmetic is not emulated,
+    so add a guard to the generator for a known MBF difference
+  - Known differences: `docs/dev/MBASIC_521_DIVERGENCES_TODO.md`
+
+- **`fuzz_real_c.py`** - The same test for the C backend
+  - `python3 utils/fuzz_real_c.py SEED [SEED ...] [--mode MODE]`
+  - Removes each line block that gives an error on the binary, the error
+    handler and PRINT USING (the C backend has neither), builds the rest with
+    `--compile-c` (uc80) and runs the .com under cpmemu
+
+- **`run_real_mbasic.py`** - Run real MBASIC with piped input and keep stdin
+  open until the program ends (cpmemu stops a running program at end of input)
+  - `(cat test.bas; echo RUN) | python3 utils/run_real_mbasic.py [TIMEOUT]`
+
 - **`run_tests_with_results.py`** - Run tests and capture results
 
 - **`debug_test.py`** - Debug specific test cases

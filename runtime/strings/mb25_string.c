@@ -1610,6 +1610,48 @@ static int mb25_round_digits(char *d, int n, int keep, int *e10) {
     return n;
 }
 
+/* Round a positive double to a single as MBASIC does: to the nearest, and a
+ * tie to the larger magnitude (number_format._single_ties_up). */
+static double mb25_single_up(double v) {
+    double g = (float)v, ulp;
+    int e;
+    if (g == v || g >= v) {
+        return g;
+    }
+    frexp(g, &e);
+    ulp = ldexp(1.0, e - 24);
+    return (v - g == g + ulp - v) ? g + ulp : g;
+}
+
+/* The six digits MBASIC's FOUT prints for a positive single (foutnv in
+ * f4.mac): divide or multiply by ten, one single-precision step at a time,
+ * until the number lies in 99999.95 .. 999999.5, then add .5 and drop the
+ * fraction (number_format._single_fout_digits).  Puts the digits in d, the
+ * power of ten of the leading one in *e10, and returns the count. */
+static int mb25_fout_single(char *d, double v, int *e10) {
+    double x = mb25_single_up(v);
+    long k;
+    int i, e = 0;
+    if (x >= 999999.5) {
+        while (x >= 999999.5) {
+            x = mb25_single_up(x / 10);
+            e++;
+        }
+    } else {
+        while (x < 99999.953125) {
+            x = mb25_single_up(x * 10);
+            e--;
+        }
+    }
+    k = (long)mb25_single_up(x + 0.5);
+    for (i = 5; i >= 0; i--) {
+        d[i] = (char)('0' + k % 10);
+        k /= 10;
+    }
+    *e10 = e + 5;
+    return 6;
+}
+
 /* The characters MBASIC prints for a number, without the padding spaces
  * (number_format.format_number).  kind 0 is single, 1 is double.  buf needs
  * 40 bytes.  Returns the length. */
@@ -1637,41 +1679,40 @@ int mb25_fmt_num(char *buf, double v, int kind) {
         return neg ? 12 : 11;
     }
 
-    /* v = m * 2^e with m in [0.5, 1).  Peel m into bytes: N * 2^(e-k). */
-    m = frexp(v, &e);
-    mb25_fn = 1;
-    mb25_fd[0] = 0;
-    p = e;
-    while (m != 0) {
-        m *= 256;
-        b = (unsigned int)m;
-        m -= b;
-        mb25_fd_mul(256);
-        mb25_fd_add(b);
-        p -= 8;
-    }
-    x = 0;                         /* the integer in mb25_fd times 10^x */
-    if (p > 0) {
-        while (p-- > 0) {
-            mb25_fd_mul(2);
-        }
-    } else {
-        x = p;
-        while (p++ < 0) {
-            mb25_fd_mul(5);
-        }
-    }
-    n = mb25_fn;
-    for (i = 0; i < n; i++) {
-        d[i] = (char)('0' + mb25_fd[n - 1 - i]);
-    }
-    x += n - 1;                    /* power of ten of the leading digit */
-
     if (kind == 0) {
-        /* MBASIC makes seven decimal digits first, then prints six of them */
-        n = mb25_round_digits(d, n, MB25_SINGLE_DIGITS + 1, &x);
+        n = mb25_fout_single(d, v, &x);
+    } else {
+        /* v = m * 2^e with m in [0.5, 1).  Peel m into bytes: N * 2^(e-k). */
+        m = frexp(v, &e);
+        mb25_fn = 1;
+        mb25_fd[0] = 0;
+        p = e;
+        while (m != 0) {
+            m *= 256;
+            b = (unsigned int)m;
+            m -= b;
+            mb25_fd_mul(256);
+            mb25_fd_add(b);
+            p -= 8;
+        }
+        x = 0;                         /* the integer in mb25_fd times 10^x */
+        if (p > 0) {
+            while (p-- > 0) {
+                mb25_fd_mul(2);
+            }
+        } else {
+            x = p;
+            while (p++ < 0) {
+                mb25_fd_mul(5);
+            }
+        }
+        n = mb25_fn;
+        for (i = 0; i < n; i++) {
+            d[i] = (char)('0' + mb25_fd[n - 1 - i]);
+        }
+        x += n - 1;                    /* power of ten of the leading digit */
+        n = mb25_round_digits(d, n, digits, &x);
     }
-    n = mb25_round_digits(d, n, digits, &x);
     while (n > 1 && d[n - 1] == '0') {
         n--;
     }

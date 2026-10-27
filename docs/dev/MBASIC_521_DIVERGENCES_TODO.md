@@ -1089,3 +1089,17 @@ Each item was measured on the binary. Test:
   Still different, by design (MBF arithmetic is not emulated): `100^16`
   prints 9.99999E+31 on the binary, a single product between 1.70141E+38
   and 3.4E+38 is Overflow there, and `32768*-32769` prints -1.07377E+09.
+  The random tests are `utils/fuzz_real.py` (interpreter, JavaScript) and
+  `utils/fuzz_real_c.py` (C backend). A fifth run, with the JavaScript
+  backend on control flow, found one more, done: `NEXT` in the interpreter
+  steps a single-precision variable in single precision, so
+  `FOR I=1E10 TO 1E10 STEP 3` never ends, as on the binary (1E10+3 is 1E10).
+  Test: `test_loop_and_call_error_edges.py`. A tie (16777216+1) still rounds
+  to even, not up as MBF does, in `NEXT` as in `+`.
+  A run of 100 seeds in each mode found two more, done in the interpreter
+  and the JavaScript backend: `AND`, `OR`, `XOR`, `EQV`, `IMP`, `\` and
+  `MOD` make the left operand a 16-bit integer before they read the right
+  one (`65535 AND 1/0` is `Overflow`, `"a" AND 1/0` is `Type mismatch`),
+  and a single gets its six printed digits by FOUT's steps of ten (see
+  `NUMBER_FORMATTING.md`; the C runtime too). Test:
+  `test_operand_order_and_single_print.py`.

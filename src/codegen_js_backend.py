@@ -47,12 +47,20 @@ function _round_digits(ds, exp, n) {
 }
 function _sig_digits(a, digits) {
     // The digits of a > 0 rounded to 6 (single) or 16 (double) significant figures, as [digit string, exponent].
-    // A single is rounded twice - to the 7 digits MBASIC's conversion makes, then to the 6 printed - starting
-    // from its shortest decimal form. A double is rounded once, from its exact binary value.
-    const m = /^(\d)(?:\.(\d+))?e([+-]\d+)$/.exec(digits === 6 ? a.toExponential() : a.toExponential(digits - 1));
-    let ds = m[1] + (m[2] || ""), exp = parseInt(m[3], 10);
-    if (digits === 6) [ds, exp] = _round_digits(ds, exp, 7);
-    return _round_digits(ds, exp, digits);
+    // A single is rounded as MBASIC's FOUT does it (foutnv in f4.mac): divided or multiplied by ten, one
+    // single-precision step at a time, until it lies in 99999.95 .. 999999.5, then .5 added and the
+    // fraction dropped (number_format._single_fout_digits). A double is rounded once, from its exact value.
+    if (digits === 6 && a < 3.4028235677973366e38) {
+        let x = _single_ties_up(a), e = 0;
+        if (x >= 999999.5) {
+            while (x >= 999999.5) { x = _single_ties_up(x / 10); e++; }
+        } else {
+            while (x < 99999.953125) { x = _single_ties_up(x * 10); e--; }
+        }
+        return _round_digits(String(Math.trunc(_single_ties_up(x + 0.5))), e + 5, 6);
+    }
+    const m = /^(\d)(?:\.(\d+))?e([+-]\d+)$/.exec(a.toExponential(digits - 1));
+    return _round_digits(m[1] + (m[2] || ""), parseInt(m[3], 10), digits);
 }
 function _fmt_num(v, digits) {
     if (v === true) v = -1; else if (v === false) v = 0;
@@ -3498,6 +3506,11 @@ class JavaScriptBackend(CodeGenBackend):
             right = self._generate_expression(expr.right)
             op = self._token_to_operator(expr.operator)
             if binary_mismatch(expr):
+                if op in LOGICAL_HELPERS or op in ('//', '%'):
+                    # The left operand is made an integer before the right is read
+                    if expr_kind(expr.left) == 's':
+                        return self._type_mismatch(left)
+                    return self._type_mismatch(f'_ci({left})', right)
                 return self._type_mismatch(left, right)
 
             # Map BASIC operators to JavaScript
@@ -3509,7 +3522,7 @@ class JavaScriptBackend(CodeGenBackend):
                 # Integer division truncates toward zero in MBASIC, so -10 \ 3
                 # is -3. Both operands are rounded to 16-bit integers first,
                 # and a zero divisor is Division by zero (_idiv).
-                return f'_idiv({left}, {right})'
+                return f'_idiv(_ci({left}), {right})'
             elif op in ['+', '-', '*', '/', '<', '>', '<=', '>=', '=', '<>']:
                 if op == '=':
                     js_op = '==='
@@ -3531,10 +3544,12 @@ class JavaScriptBackend(CodeGenBackend):
                     return f'(({left} {js_op} {right}) ? -1 : 0)'
                 return f'({left} {js_op} {right})'
             elif op in LOGICAL_HELPERS:
-                # AND, OR, XOR, EQV and IMP are 16-bit integer operators in MBASIC
-                return f'{LOGICAL_HELPERS[op]}({left}, {right})'
+                # AND, OR, XOR, EQV and IMP are 16-bit integer operators in MBASIC.
+                # The left operand is made one before the right is read: 65535 AND 1/0
+                # is Overflow, not Division by zero (measured).
+                return f'{LOGICAL_HELPERS[op]}(_ci({left}), {right})'
             elif op == '%':  # MOD
-                return f'_mod({left}, {right})'
+                return f'_mod(_ci({left}), {right})'
             else:
                 return f'({left} {op} {right})'
         elif isinstance(expr, UnaryOpNode):

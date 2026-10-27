@@ -98,6 +98,15 @@ seventh digit that rounds up into a five carries:
 Doubles are left rounding once: measured against the binary, rounding them
 twice makes more values wrong rather than fewer.
 
+Later correction (2026-10-27): rounding to seven digits and then to six is
+only an approximation. MBASIC's FOUT routine (`foutnv` in `f4.mac`) divides or
+multiplies the single by ten, one single-precision step at a time, until it is
+in the range 99999.95 to 999999.5. Then it adds .5 and drops the fraction. Each
+step rounds. Built as exact singles, the values above print `.043496`,
+`12.3456` and `.1` on the binary. `number_format._single_fout_digits` now does
+the FOUT steps. It agrees with the binary on 400 random singles and on the RND
+values of 61 seeds. The two-step rounding was wrong on 12 of those 400 singles.
+
 ## Verifying
 
 	python3 tests/regression/interpreter/test_rnd_sequence.py

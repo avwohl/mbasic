@@ -85,11 +85,18 @@ the precision, the same value at both precisions, STR$, and six PRINT USING
 fields with negative numbers. Every expectation is what the real binary
 printed.
 
-## Since fixed: singles are rounded twice
+## Since fixed: the six digits of a single
 
-A single is rounded to seven digits and then to six, because that is what
-MBASIC's conversion routine does - `.04349604...` prints as `.0434961`, not
-`.043496`. Found while checking RANDOMIZE; see `RND_ALGORITHM.md`.
+A single gets its six digits as MBASIC's FOUT routine (`foutnv` in `f4.mac`)
+gets them. FOUT divides or multiplies the number by ten, one single-precision
+step at a time, until it is in the range 99999.95 to 999999.5. Then it adds .5
+and drops the fraction. Each step rounds, so the six digits are not always the
+nearest six: 1073774592 prints as `1.07377E+09`, but 1033774976 prints as
+`1.03378E+09`. An earlier fix rounded to seven digits and then to six. That
+rule was wrong on 12 of 400 random singles. The FOUT steps agree on all 400.
+The interpreter (`number_format._single_fout_digits`), the JavaScript runtime
+(`_sig_digits`) and the C runtime (`mb25_fout_single`) do the same steps. Test:
+`tests/regression/integration/test_operand_order_and_single_print.py`.
 
 ## Since fixed: single-precision arithmetic
 

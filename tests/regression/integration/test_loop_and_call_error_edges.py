@@ -32,6 +32,8 @@ ERR and ERL and does RESUME NEXT.
 - A NEXT finds its FOR below a WHILE that is still open and discards the
   WHILE entry, so the WEND after the NEXT is WEND without WHILE (30).
   (Interpreter only: the JS semantic analyzer refuses this crossed nesting.)
+- NEXT steps a single-precision variable in single precision, so
+  FOR I=1E10 TO 1E10 STEP 3 never ends: 1E10+3 is 1E10 again.
 """
 import sys
 from pathlib import Path
@@ -126,6 +128,12 @@ CASES = {
         '60 END\n'
         '100 PRINT "E";ERR;ERL:RESUME NEXT\n',
         'E 13  20 \nb 7 \nE 1  20 \nE 13  30 \nc 7 \n 7 \n'),
+    'single_step_lost_in_next': (
+        '10 C=0:FOR I=1E10 TO 1E10 STEP 3:C=C+1:IF C>3 THEN PRINT "stuck";C:GOTO 40\n'
+        '30 NEXT:PRINT "ended"\n'
+        '40 PRINT I;I=1E10\n'
+        '50 SYSTEM\n',
+        'stuck 4 \n 1E+10 -1 \n'),
 }
 
 INTERPRETER_ONLY = {

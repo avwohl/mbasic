@@ -98,23 +98,40 @@ def format_for_print(value, digits=SINGLE_DIGITS):
 def _round_to_digits(value, digits):
     """Round a positive value to `digits` significant figures.
 
-    A single is rounded twice, because MBASIC's conversion routine produces
-    seven decimal digits for a 24-bit mantissa and the six that are printed are
-    rounded from those. It shows whenever the seventh digit rounds up into a
-    five:
+    A single is rounded as MBASIC's FOUT does it (foutnv in f4.mac): the
+    number is divided or multiplied by ten, one single-precision step at a
+    time, until it lies in 99999.95 .. 999999.5; then .5 is added and the
+    fraction dropped. Every step rounds, so the six digits are not always the
+    six nearest ones:
 
-        .04349604...   seven digits .04349605   printed .0434961, not .043496
-        12.3456497     seven digits 12.34565    printed 12.3457, not 12.3456
-        .0999999493    seven digits .09999995   printed .1, not .0999999
+        1073774592    printed 1.07377E+09  (107377.4592 is 107377.4609 as a single)
+        1033774976    printed 1.03378E+09  (103377.4976 is 103377.5 as a single)
+        .0999999493   printed .1
 
-    Doubles do not get this treatment - measured against the binary, rounding
-    them twice makes more values wrong rather than fewer.
+    Doubles do not get this treatment - measured against the binary, it makes
+    more of them wrong rather than fewer.
     """
-    if digits == SINGLE_DIGITS:
-        wide = Context(prec=digits + 1, rounding=ROUND_HALF_UP)
-        value = wide.create_decimal(repr(float(value)))
+    if digits == SINGLE_DIGITS and value < SINGLE_LIMIT:
+        mantissa, exponent = _single_fout_digits(value)
+        return Decimal(mantissa).scaleb(exponent).normalize(
+            Context(prec=digits, rounding=ROUND_HALF_UP))
     context = Context(prec=digits, rounding=ROUND_HALF_UP)
     return context.create_decimal(value).normalize(context)
+
+
+def _single_fout_digits(value):
+    """The six digits FOUT prints for a positive single, and their power of ten."""
+    x = to_single(value)
+    exponent = 0
+    if x >= 999999.5:
+        while x >= 999999.5:
+            x = _single_ties_up(x / 10)
+            exponent += 1
+    else:
+        while x < 99999.953125:              # 99999.95 as a single
+            x = _single_ties_up(x * 10)
+            exponent -= 1
+    return int(_single_ties_up(x + 0.5)), exponent
 
 
 def _significant_digits(rounded):

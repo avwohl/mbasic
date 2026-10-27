@@ -146,6 +146,12 @@ p.stdin.write(program_text + b'RUN\n'); p.stdin.flush()
 p.wait(timeout=120)          # do not close stdin before the program ends
 ```
 
+`utils/run_real_mbasic.py` does this for you:
+
+```bash
+(cat test.bas; echo RUN) | python3 utils/run_real_mbasic.py 120
+```
+
 ### Capturing Output to File
 
 With cpmemu, discard stderr so its startup/exit chatter stays out of the capture:
