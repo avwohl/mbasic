@@ -139,6 +139,15 @@ class Z88dkCBackend(CodeGenBackend):
         # everything else is shared.  See docs/dev/TOOLCHAIN_POLICY.md.
         self.dialect = self.config.get('dialect', 'z88dk')
 
+        # -g: '#line N "prog.bas"' before the C code of each BASIC line, so that
+        # uc80 -g can map code to BASIC lines (docs/dev/DEBUG_INFO.md).  Only
+        # the uc80 dialect: z88dk does not read the markers that uc80 writes.
+        # N is the physical line of the file, which is what a debugger lists.
+        self.debug_lines = self.dialect == 'uc80' and bool(self.config.get('debug_info'))
+        self.debug_source = self.config.get('debug_source') or self.config.get('source_file', '')
+        # The name that the C text after the BASIC lines goes back to
+        self.debug_c_file = self.config.get('debug_c_file') or 'prog.c'
+
         # OPTION BASE (0 or 1) as the semantic analyzer saw it
         self.array_base = self.config.get('array_base', 0)
         # Number of subscripts each array is used with, by symbol-table key
@@ -502,6 +511,9 @@ class Z88dkCBackend(CodeGenBackend):
         # Generate code for each line
         for line_node in program.lines:
             code.extend(self._generate_line(line_node))
+        if self.debug_lines:
+            # The C text after the last BASIC line is not that line
+            code.append(self._LINE_BACK)
 
         if self.track_statements:
             code.extend(self._flush_after_position())
@@ -524,7 +536,28 @@ class Z88dkCBackend(CodeGenBackend):
         code.append('}')
         code.append('')
 
-        return '\n'.join(self._finalize_lines(code))
+        text = '\n'.join(self._finalize_lines(code))
+        if self.debug_lines:
+            text = self._number_line_back(text)
+        return text
+
+    # Stands for '#line <its own physical line + 1> "prog.c"' until the C text is
+    # whole and the number is known (_number_line_back).
+    _LINE_BACK = '#line @BACK@'
+
+    @staticmethod
+    def _c_string(text: str) -> str:
+        """A file name as a C string literal (without checking for odd characters)."""
+        return '"' + text.replace('\\', '/').replace('"', '\\"') + '"'
+
+    def _number_line_back(self, text: str) -> str:
+        """Replace each _LINE_BACK by a #line directive for the C file."""
+        lines = text.split('\n')
+        for index, line in enumerate(lines):
+            if line == self._LINE_BACK:
+                # lines[index] is physical line index+1, so the next one is index+2
+                lines[index] = f'#line {index + 2} {self._c_string(self.debug_c_file)}'
+        return '\n'.join(lines)
 
     def _finalize_lines(self, code: List[str]) -> List[str]:
         """Post-process the emitted C so it is valid C17, not just GCC-accepted.
@@ -540,7 +573,9 @@ class Z88dkCBackend(CodeGenBackend):
             if label_only.match(line):
                 # Find the next line with content; if it closes the block, the label
                 # would be dangling.
-                nxt = next((c for c in code[i + 1:] if c.strip()), '')
+                # (a #line directive between them is not a statement)
+                nxt = next((c for c in code[i + 1:]
+                            if c.strip() and not c.startswith('#line')), '')
                 if nxt.lstrip().startswith('}'):
                     # the null statement goes before any trailing comment
                     line = re.sub(r':(\s*)(/\*.*\*/)?\s*$', r': ;\1\2', line).rstrip()
@@ -1413,7 +1448,56 @@ class Z88dkCBackend(CodeGenBackend):
             code.extend(self._generate_tracked_statement(
                 stmt, first_position if index == 0 else None))
 
+        # The C code of this line maps to its line of the BASIC file
+        if self.debug_lines and line_node.line_num > 0:
+            code = self._with_line_directives(code, line_node.line_num)
+
         return code
+
+    def _with_line_directives(self, code: List[str], basic_line: int) -> List[str]:
+        """Put '#line N "prog.bas"' before each C line of one BASIC line.
+
+        A #line directive sets the line of the next C line only; the lines after
+        it count up from there. The C text of a BASIC line has more than one line,
+        so each of them gets the directive, or the second C line would map to
+        BASIC line N+1. A line inside a /* comment */ cannot have one.
+        """
+        directive = f'#line {basic_line} {self._c_string(self.debug_source)}'
+        out: List[str] = []
+        in_comment = False
+        for item in code:
+            for text in item.split('\n'):
+                if not in_comment and text.strip() and not text.lstrip().startswith('#'):
+                    out.append(directive)
+                out.append(text)
+                in_comment = self._ends_in_comment(text, in_comment)
+        return out
+
+    @staticmethod
+    def _ends_in_comment(text: str, in_comment: bool) -> bool:
+        """Whether a /* comment */ is still open at the end of this C line."""
+        i, n = 0, len(text)
+        quote = None
+        while i < n:
+            c = text[i]
+            if in_comment:
+                if text.startswith('*/', i):
+                    in_comment = False
+                    i += 1
+            elif quote:
+                if c == '\\':
+                    i += 1
+                elif c == quote:
+                    quote = None
+            elif c in '"\'':
+                quote = c
+            elif text.startswith('/*', i):
+                in_comment = True
+                i += 1
+            elif text.startswith('//', i):
+                break
+            i += 1
+        return in_comment
 
     def _position_label(self, code: List[str]) -> int:
         """Emit the next position label p_N; it is also the after-position of

@@ -89,6 +89,7 @@ emulator. The Z80/8080 compiler setup is in [Compilers](https://github.com/avwoh
 - **[CP/M Emulator Setup](https://github.com/avwohl/mbasic/blob/main/docs/dev/TNYLPO_SETUP.md)** - tnylpo installation for testing
 - **[Linux Mint Developer Setup](https://github.com/avwohl/mbasic/blob/main/docs/dev/LINUX_MINT_DEVELOPER_SETUP.md)** - Complete system setup guide (all packages & tools)
 - [Testing](https://github.com/avwohl/mbasic/blob/main/docs/dev/TESTING.md) - Running and writing tests (`python3 tests/run_regression.py`)
+- [Debug Information](https://github.com/avwohl/mbasic/blob/main/docs/dev/DEBUG_INFO.md) - `--compile-c -g`: break and step on BASIC lines with udb80
 - [Project Structure](https://github.com/avwohl/mbasic/blob/main/docs/dev/PROJECT_STRUCTURE.md) - Source tree layout
 - [Developer Documentation](https://github.com/avwohl/mbasic/blob/main/docs/dev/) - Parser, interpreter, and compiler architecture and implementation notes
 - [Development History](https://github.com/avwohl/mbasic/blob/main/docs/history/DEVELOPMENT_HISTORY.md) - How the project was built, phase by phase

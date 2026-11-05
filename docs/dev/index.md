@@ -101,6 +101,7 @@ port I/O — but they are not required. Read
 ### Other
 
 - [C Backend](C_BACKEND.md)
+- [Debug Information (-g)](DEBUG_INFO.md)
 - [Checkpoint Validation](CHECKPOINT_VALIDATION.md)
 - [Compact Source](COMPACT_SOURCE.md)
 - [Compiler Cpu Targets](COMPILER_CPU_TARGETS.md)

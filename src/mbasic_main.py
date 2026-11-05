@@ -463,7 +463,8 @@ def uc80_halves_backslashes():
             return False
 
 
-def build_with_uc80(c_file, com_file, runtime_dir, runtime_c, string_count, debug):
+def build_with_uc80(c_file, com_file, runtime_dir, runtime_c, string_count, debug,
+                    debug_info=False):
     """Build a CP/M .com with the preferred toolchain: uc80 -> um80 -> ul80.
 
     uc80 is a C-to-assembly translator only; it never invokes an assembler or
@@ -477,6 +478,9 @@ def build_with_uc80(c_file, com_file, runtime_dir, runtime_c, string_count, debu
       cleanly but places the code in BSS, where crt0 zeroes it before main runs.
     - --printf flags accumulate rather than replace; float alone loses %d.
     - --no-embed-runtime is required because we link runtime.lib explicitly.
+
+    debug_info (-g): uc80 -g, um80 --debug-info and ul80 --debug-info, which
+    write prog.dbg beside the .com.  The code is the same bytes.
     """
     lib = uc80_lib_dir()
     if lib is None:
@@ -505,10 +509,13 @@ def build_with_uc80(c_file, com_file, runtime_dir, runtime_c, string_count, debu
         uc80_cmd.append(f'-DMB25_NUM_STRINGS={string_count}')
     uc80_cmd += [c_file, runtime_c] + uc80_stdio_flags(c_file) + [
                  '--no-embed-runtime', '--no-ast-optimize', '-o', mac_file]
+    if debug_info:
+        uc80_cmd.append('-g')
+    um80_debug = ['--debug-info'] if debug_info else []
     _run_tool(uc80_cmd, 'uc80 compilation', c_file, debug,
               'Install it with: pip install uc80 um80')
 
-    _run_tool(['um80', mac_file, '-o', rel_file], 'um80 assembly', c_file, debug,
+    _run_tool(['um80'] + um80_debug + [mac_file, '-o', rel_file], 'um80 assembly', c_file, debug,
               'Install it with: pip install um80')
 
     link_inputs = [rel_file]
@@ -517,12 +524,12 @@ def build_with_uc80(c_file, com_file, runtime_dir, runtime_c, string_count, debu
             print(f"Error: {shim_mac} not found - it supplies the string-pool "
                   "helpers that uc80 cannot express in C.", file=sys.stderr)
             sys.exit(1)
-        _run_tool(['um80', shim_mac, '-o', shim_rel], 'um80 assembly of the uc80 shim',
+        _run_tool(['um80'] + um80_debug + [shim_mac, '-o', shim_rel], 'um80 assembly of the uc80 shim',
                   c_file, debug)
         link_inputs.append(shim_rel)
 
     sym_file = os.path.splitext(com_file)[0] + '.sym'
-    _run_tool(['ul80'] + link_inputs +
+    _run_tool(['ul80'] + um80_debug + link_inputs +
               [os.path.join(lib, 'libc.lib'), os.path.join(lib, 'runtime.lib'),
                '-o', com_file, '-S', sym_file],
               'ul80 link', c_file, debug, 'Install it with: pip install um80')
@@ -563,7 +570,7 @@ def build_with_z88dk(c_file, com_file, runtime_dir, runtime_c, cpu, debug):
 
 
 def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
-                 toolchain='uc80', emulator='cpmemu'):
+                 toolchain='uc80', emulator='cpmemu', debug_info=False):
     """Compile BASIC program to C, then to a CP/M .com executable.
 
     Args:
@@ -575,6 +582,10 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
         toolchain: 'uc80' (preferred) or 'z88dk' (alternate).  See
             docs/dev/TOOLCHAIN_POLICY.md.  '8080' forces z88dk - uc80 is Z80-only.
         emulator: 'cpmemu' (preferred) or 'tnylpo' (alternate)
+        debug_info: -g.  Write '#line N "prog.bas"' before the C code of each
+            BASIC line and build with uc80 -g, um80 --debug-info and ul80
+            --debug-info, so that prog.dbg maps code to lines of the BASIC file
+            (docs/dev/DEBUG_INFO.md).  uc80 toolchain only.
     """
     import subprocess
 
@@ -638,6 +649,15 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
             print("Note: --cpu 8080 requires the z88dk toolchain (uc80 is Z80-only) "
                   "- building with z88dk.", file=sys.stderr)
             toolchain = 'z88dk'
+        if debug_info and toolchain != 'uc80':
+            print("Note: -g needs the uc80 toolchain (z88dk does not read its debug "
+                  "markers) - building without debug information.", file=sys.stderr)
+            debug_info = False
+
+        # --compile-c takes a base name, but users reasonably pass "out.c" and
+        # got "out.c.c". Treat a trailing .c as the base name they meant.
+        if output_file.endswith('.c'):
+            output_file = output_file[:-2]
 
         # Generate C code
         config = {
@@ -646,6 +666,9 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
             'dialect': toolchain,
             'array_base': analyzer.array_base,
             'uc80_halves_backslashes': toolchain == 'uc80' and uc80_halves_backslashes(),
+            'debug_info': debug_info,
+            'debug_source': input_file,
+            'debug_c_file': output_file + '.c',
         }
         backend = Z88dkCBackend(analyzer.symbols, config)
         c_code = backend.generate(ast)
@@ -663,11 +686,6 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
                   "was written. Run the program with the interpreter instead, or "
                   "use --compile-js.", file=sys.stderr)
             sys.exit(1)
-
-        # --compile-c takes a base name, but users reasonably pass "out.c" and
-        # got "out.c.c". Treat a trailing .c as the base name they meant.
-        if output_file.endswith('.c'):
-            output_file = output_file[:-2]
 
         # Write C file
         c_file = output_file + '.c'
@@ -698,7 +716,7 @@ def compile_to_c(input_file, output_file, cpu='z80', run=False, debug=False,
         bss_end = None
         if toolchain == 'uc80':
             bss_end = build_with_uc80(c_file, com_file, runtime_dir, runtime_c,
-                                      backend.string_count, debug)
+                                      backend.string_count, debug, debug_info)
         else:
             build_with_z88dk(c_file, com_file, runtime_dir, runtime_c, cpu, debug)
 
@@ -996,6 +1014,15 @@ Examples:
     )
 
     parser.add_argument(
+        '-g', '--debug-info',
+        dest='debug_info',
+        action='store_true',
+        help='With --compile-c: write debug information. The compiled program is '
+             'the same bytes; the file out.dbg maps its code to the lines of the '
+             'BASIC file for udb80 (uc80 toolchain only; docs/dev/DEBUG_INFO.md)'
+    )
+
+    parser.add_argument(
         '--toolchain',
         choices=['uc80', 'z88dk'],
         default='uc80',
@@ -1073,7 +1100,8 @@ Examples:
             run=args.run,
             debug=args.debug,
             toolchain=args.toolchain,
-            emulator=args.emulator
+            emulator=args.emulator,
+            debug_info=args.debug_info
         )
         sys.exit(0)
 
