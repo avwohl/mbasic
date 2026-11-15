@@ -132,7 +132,7 @@ CMD ["python3", "mbasic", "--ui", "web"]
 version: '3.8'
 services:
   redis:
-    image: redis:8-alpine
+    image: redis:alpine
 
   mbasic:
     build: .
