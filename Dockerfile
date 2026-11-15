@@ -2,7 +2,7 @@
 # Multi-stage build for smaller final image
 
 # Stage 1: Builder
-FROM python:3.12-slim as builder
+FROM python:3-slim as builder
 
 WORKDIR /build
 
@@ -19,7 +19,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 COPY . .
 
 # Stage 2: Runtime
-FROM python:3.12-slim
+FROM python:3-slim
 
 # Create non-root user
 RUN useradd -m -u 1000 -s /bin/bash mbasic

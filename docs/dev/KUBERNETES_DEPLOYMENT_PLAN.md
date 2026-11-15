@@ -83,7 +83,7 @@ Deploy MBASIC web UI to DigitalOcean Kubernetes cluster for public access at `ht
 
 ### 1. Docker Container
 
-**Base Image:** `python:3.12-slim`
+**Base Image:** `python:3-slim`
 
 **Includes:**
 - MBASIC interpreter
