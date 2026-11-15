@@ -294,7 +294,7 @@ source venv/bin/activate
 # Install web UI and multi-user dependencies
 pip install nicegui>=3.2.0
 pip install redis>=5.0.0
-pip install mysql-connector-python>=8.0
+pip install 'PyMySQL[rsa]>=1.2'
 
 # Or install all at once
 pip install -r requirements.txt
@@ -533,7 +533,7 @@ tnylpo test_varptr_simple.com
 - [ ] Run `config/setup_mysql_logging.sql`
 - [ ] `apache2` - Web server (optional)
 - [ ] Configure directory permissions
-- [ ] Install Python packages: `nicegui`, `redis`, `mysql-connector-python`
+- [ ] Install Python packages: `nicegui`, `redis`, `PyMySQL[rsa]`
 
 ### Kubernetes/Cloud Deployment
 - [ ] `docker.io` - Container runtime

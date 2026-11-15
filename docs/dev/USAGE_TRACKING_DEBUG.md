@@ -33,7 +33,7 @@ MySQL database tables remain empty - no usage tracking data is being recorded fr
 ### Dependencies ✅
 **requirements.txt**:
 ```
-mysql-connector-python>=8.0
+PyMySQL[rsa]>=1.2
 ```
 ✅ MySQL connector is installed in Docker image
 

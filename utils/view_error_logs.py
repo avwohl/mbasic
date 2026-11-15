@@ -20,6 +20,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 from multiuser_config import get_config
 
 
+def dict_cursor(conn):
+    """Return a cursor that gives each row as a dict."""
+    import pymysql.cursors
+    return conn.cursor(pymysql.cursors.DictCursor)
+
+
 def get_mysql_connection():
     """Get MySQL connection if configured.
 
@@ -38,7 +44,7 @@ def get_mysql_connection():
         return None
 
     try:
-        import mysql.connector
+        import pymysql
 
         # Build connection parameters
         conn_params = {
@@ -57,12 +63,12 @@ def get_mysql_connection():
         if config.error_logging.mysql.password:
             conn_params['password'] = config.error_logging.mysql.password
 
-        conn = mysql.connector.connect(**conn_params)
+        conn = pymysql.connect(**conn_params)
         return conn
 
     except ImportError:
-        print("Error: mysql-connector-python not installed", file=sys.stderr)
-        print("Install with: pip install mysql-connector-python", file=sys.stderr)
+        print("Error: PyMySQL not installed", file=sys.stderr)
+        print("Install with: pip install 'PyMySQL[rsa]'", file=sys.stderr)
         return None
 
     except Exception as e:
@@ -83,7 +89,7 @@ def show_recent_errors(limit=50, unexpected_only=False, session_id=None):
         return
 
     try:
-        cursor = conn.cursor(dictionary=True)
+        cursor = dict_cursor(conn)
 
         query = """
             SELECT id, timestamp, session_id, error_type, is_expected,
@@ -145,7 +151,7 @@ def show_error_detail(error_id):
         return
 
     try:
-        cursor = conn.cursor(dictionary=True)
+        cursor = dict_cursor(conn)
 
         cursor.execute("""
             SELECT * FROM web_errors WHERE id = %s
@@ -179,7 +185,7 @@ def show_summary():
         return
 
     try:
-        cursor = conn.cursor(dictionary=True)
+        cursor = dict_cursor(conn)
 
         # Error counts by type
         print("\n" + "="*80)

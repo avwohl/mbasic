@@ -55,8 +55,7 @@ class ErrorLogger:
             return False
 
         try:
-            import mysql.connector
-            from mysql.connector import Error
+            import pymysql
 
             # Build connection parameters
             conn_params = {
@@ -76,14 +75,14 @@ class ErrorLogger:
             if self.config.mysql.password:
                 conn_params['password'] = self.config.mysql.password
 
-            self._mysql_connection = mysql.connector.connect(**conn_params)
+            self._mysql_connection = pymysql.connect(**conn_params)
             self._mysql_available = True
             return True
 
         except ImportError:
             sys.stderr.write(
-                "Warning: mysql-connector-python not installed. "
-                "Install with: pip install mysql-connector-python\n"
+                "Warning: PyMySQL not installed. "
+                "Install with: pip install 'PyMySQL[rsa]'\n"
                 "Falling back to stderr logging only.\n"
             )
             sys.stderr.flush()
@@ -240,7 +239,7 @@ class ErrorLogger:
 
     def __del__(self):
         """Clean up MySQL connection on deletion."""
-        if self._mysql_connection and self._mysql_connection.is_connected():
+        if self._mysql_connection and self._mysql_connection.open:
             self._mysql_connection.close()
 
 

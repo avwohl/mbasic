@@ -10,7 +10,7 @@
 urwid>=2.0.0                # For curses backend (full-screen terminal UI)
 nicegui>=3.2.0              # For web backend (browser-based UI)
 redis>=5.0.0                # For Redis-backed session storage (load-balanced web deployments)
-mysql-connector-python>=8.0 # For MySQL error logging (multi-user web deployments)
+PyMySQL[rsa]>=1.2           # For MySQL error logging and usage tracking (multi-user web deployments)
 requests>=2.31.0            # For bot protection (hCaptcha) and health checks in web deployments
 
 # Development/testing dependencies (optional)

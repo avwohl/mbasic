@@ -30,7 +30,7 @@ class UsageTracker:
     def _init_db_connection(self):
         """Initialize MySQL database connection."""
         try:
-            import mysql.connector
+            import pymysql
             mysql_config = self.config.get('mysql', {})
 
             # Build connection params
@@ -38,7 +38,7 @@ class UsageTracker:
                 'database': mysql_config.get('database', 'mbasic_logs'),
                 'charset': 'utf8mb4',
                 'autocommit': True,
-                'connection_timeout': 10
+                'connect_timeout': 10
             }
 
             # Use unix socket or host/port
@@ -64,7 +64,7 @@ class UsageTracker:
 
             # Attempt connection
             logger.info(f"Usage tracking: Attempting to connect to database '{conn_params['database']}'...")
-            self.db_connection = mysql.connector.connect(**conn_params)
+            self.db_connection = pymysql.connect(**conn_params)
             logger.info("✓ Usage tracking database connection established successfully")
 
             # Verify connection with test query

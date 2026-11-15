@@ -305,7 +305,7 @@ If MySQL connection fails:
 
 Install MySQL connector:
 ```bash
-pip install mysql-connector-python
+pip install 'PyMySQL[rsa]'
 ```
 
 ### View Stderr Logs
@@ -345,7 +345,7 @@ For production multi-user deployments:
 - **Minimal overhead** when MySQL enabled:
   - Error logging is asynchronous
   - Only logs unexpected errors
-  - Connection pooling via mysql-connector-python
+  - One MySQL connection for each process (PyMySQL)
   - No impact on successful operations
 
 ## Future Enhancements

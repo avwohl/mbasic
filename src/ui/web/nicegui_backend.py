@@ -4782,14 +4782,14 @@ def start_web_ui(port=8080):
             # Check error logging MySQL
             if config.error_logging.type in ('mysql', 'both') and config.error_logging.mysql:
                 try:
-                    import mysql.connector
-                    conn = mysql.connector.connect(
+                    import pymysql
+                    conn = pymysql.connect(
                         host=config.error_logging.mysql.host,
                         port=config.error_logging.mysql.port or 3306,
                         user=config.error_logging.mysql.user,
                         password=config.error_logging.mysql.password,
                         database=config.error_logging.mysql.database,
-                        connection_timeout=3
+                        connect_timeout=3
                     )
                     conn.close()
                     health_status['checks']['mysql_error_logging'] = 'ok'

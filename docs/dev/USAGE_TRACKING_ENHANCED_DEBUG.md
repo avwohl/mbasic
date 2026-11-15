@@ -22,7 +22,7 @@ MySQL usage tracking tables remained empty despite configuration being correct. 
 - ✅ Log reconnection attempts
 
 **Added timeout:**
-- ✅ Set `connection_timeout=10` to fail fast on connection issues
+- ✅ Set `connect_timeout=10` to fail fast on connection issues
 
 ### 2. Enhanced Health Check in `src/ui/web/nicegui_backend.py`
 
@@ -142,16 +142,16 @@ kubectl exec -it -n mbasic deployment/mbasic-web -- /bin/bash
 
 # Test MySQL connection
 python3 -c "
-import mysql.connector
+import pymysql
 import os
 try:
-    conn = mysql.connector.connect(
+    conn = pymysql.connect(
         host=os.environ['MYSQL_HOST'],
         port=3306,
         user=os.environ['MYSQL_USER'],
         password=os.environ['MYSQL_PASSWORD'],
         database='mbasic_logs',
-        connection_timeout=10
+        connect_timeout=10
     )
     print('✓ Connection successful')
     cursor = conn.cursor()
@@ -309,7 +309,7 @@ Should show non-zero counts!
 2025-11-12 22:30:25,128 - src.usage_tracker - ERROR -   Usage tracking will be DISABLED
 2025-11-12 22:30:25,129 - src.usage_tracker - ERROR -   Full traceback: Traceback (most recent call last):
   File "/app/src/usage_tracker.py", line 67, in _init_db_connection
-    self.db_connection = mysql.connector.connect(**conn_params)
+    self.db_connection = pymysql.connect(**conn_params)
   ... [full stack trace] ...
 ✗ Usage tracking FAILED to initialize (check logs above)
 ```

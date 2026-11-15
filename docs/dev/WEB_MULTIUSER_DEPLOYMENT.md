@@ -61,12 +61,12 @@ pip install redis>=5.0.0
 
 **For MySQL error logging:**
 ```bash
-pip install mysql-connector-python>=8.0
+pip install 'PyMySQL[rsa]>=1.2'
 ```
 
 **All at once:**
 ```bash
-pip install nicegui redis mysql-connector-python
+pip install nicegui redis 'PyMySQL[rsa]'
 ```
 
 **Note:** No apt packages needed - all dependencies are pure Python!
@@ -656,7 +656,7 @@ ui.run(
 
 ## Production Checklist
 
-- [ ] Dependencies installed (nicegui, redis, mysql-connector-python)
+- [ ] Dependencies installed (nicegui, redis, PyMySQL)
 - [ ] Redis server running (if using session storage)
 - [ ] MySQL/MariaDB server running (if using error logging)
 - [ ] Database created (`config/setup_mysql_logging.sql`)

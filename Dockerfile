@@ -42,6 +42,13 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 # Switch to non-root user
 USER mbasic
 
+# Fail the build, not the deployment, when a package does not import in this
+# image. The image follows python:3-slim, so the Python and the OpenSSL under
+# it change with time, and a package can be behind either one. The web UI
+# loads each of these modules at run time, some of them only on first use, so
+# a start of the container does not find a broken one.
+RUN python3 -c "import nicegui, redis, pymysql, cryptography, requests"
+
 # Expose port
 EXPOSE 8080
 
