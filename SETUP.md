@@ -4,7 +4,7 @@
 
 **REQUIRED** - Must be installed via apt/sudo:
 ```bash
-sudo apt install python3.12-venv
+sudo apt install python3-venv
 ```
 This package is **required** to create virtual environments on Debian/Ubuntu/Mint systems.
 
@@ -16,8 +16,8 @@ This package enables the Tkinter GUI backend. Skip if you only need CLI/Curses/W
 
 ## Initial Setup (already completed)
 ```bash
-# 1. Install system packages (see above - required: python3.12-venv, optional: python3-tk)
-sudo apt install python3.12-venv python3-tk
+# 1. Install system packages (see above - required: python3-venv, optional: python3-tk)
+sudo apt install python3-venv python3-tk
 
 # 2. Create virtual environment
 python3 -m venv venv
@@ -74,7 +74,7 @@ venv/bin/python3 mbasic
 - ✓ **Web** - Browser-based UI (nicegui 3.2.0)
 
 ## System Packages Installed (via apt/sudo)
-- **python3.12-venv** - REQUIRED for creating virtual environments on Debian/Ubuntu/Mint
+- **python3-venv** - REQUIRED for creating virtual environments on Debian/Ubuntu/Mint
 - **python3-tk** - OPTIONAL for Tkinter GUI backend only
 
 All other dependencies are installed locally in the venv (no root access needed).

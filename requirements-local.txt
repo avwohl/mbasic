@@ -2,7 +2,7 @@
 # Install with: venv/bin/pip install -r requirements-local.txt
 
 # SYSTEM PACKAGES (install via apt/sudo BEFORE creating venv):
-# REQUIRED: sudo apt install python3-venv (or python3.12-venv)
+# REQUIRED: sudo apt install python3-venv
 # OPTIONAL: sudo apt install python3-tk (only for Tkinter GUI backend)
 
 # PYTHON PACKAGES (install via pip in venv):

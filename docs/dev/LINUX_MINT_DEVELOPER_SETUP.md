@@ -17,7 +17,7 @@ This guide assumes:
 
 ```bash
 # Python virtual environment support (REQUIRED)
-sudo apt install python3.12-venv
+sudo apt install python3-venv
 
 # Tkinter GUI support (OPTIONAL - for Tk UI backend)
 sudo apt install python3-tk
@@ -506,7 +506,7 @@ tnylpo test_varptr_simple.com
 ## Summary Checklist
 
 ### Minimal Development Setup
-- [ ] `python3.12-venv` - Virtual environment support
+- [ ] `python3-venv` - Virtual environment support
 - [ ] `git` - Version control
 - [ ] Create venv and install Python dependencies
 - [ ] Verify `python3 mbasic --list-backends`
@@ -555,7 +555,7 @@ tnylpo test_varptr_simple.com
 ### "python3-venv not found"
 ```bash
 # Try with version-specific package
-sudo apt install python3-venv python3.12-venv
+sudo apt install python3-venv
 ```
 
 ### "uc80: command not found" after pip install

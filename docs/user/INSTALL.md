@@ -26,7 +26,7 @@ If you see a version number like `Python 3.9.x` or higher, you're good to go! If
 ```bash
 sudo apt install python3-venv
 # OR for specific Python version:
-sudo apt install python3.12-venv
+sudo apt install python3-venv
 ```
 This is **required** to use virtual environments (recommended). Without this, the `python3 -m venv` command will fail.
 
@@ -305,7 +305,7 @@ You need to install the `python3-venv` package:
 ```bash
 sudo apt install python3-venv
 # OR for specific Python version:
-sudo apt install python3.12-venv
+sudo apt install python3-venv
 ```
 
 This is a required system package for creating virtual environments on Debian-based systems.
